@@ -1,0 +1,324 @@
+#!/bin/bash
+#
+# Name:         chiaman
+# Author:       efnats
+# Date:         Okt 27, 2021
+# Version:      0.8
+# Purpose:
+#
+# Syntax:	chiaman.sh [--option] arguments...
+#		- options are actions to be performed
+#		- argements are disknames
+#
+# Options:	--wipe
+#	 	--format
+#		--label
+#		--write-sn
+#
+# If no option is given, all the three above actions are performed on given disks.
+#
+# Arguments:	one or more disknames (eg: sda sdb-sdd)
+#
+# Usage 1: 	chiaman.sh <diskname>...	
+# Example:	chiaman.sh sda
+#		chiaman.sh sda-sdd
+#		chiaman.sh sda sdd-sdf sdj
+#
+# Usage 2:	chiaman.sh <action> <diskname> <disknamerange> ... (in any order)
+# Example:	chiaman.sh --wipe sda sdc-sdg sdh
+#		chiaman.sh --wipe sda sdb --format sdc
+#
+# To Do:
+# -----
+#
+# 1. (Done) Don't warn the user if only labelling has been selected.
+#
+# 2. (Done) Have a set of variables at the beginning of the script to select mkfs.ext4 options 
+#    (but always include the -L option for labelling).
+#
+# 3. (Done) Define the pattern that should be set before the SERIALNR in labelling (Default: CHIA- ).
+#
+# 4. Make a help text the the options overview; print it when script is called with -h, --help
+#    or without any arguments.
+#
+# 5. (Done) Suppress the bash outputs of the used programs and pipe them into a logfile with timestamps.
+#
+# 6. (Done) Flag to enable or disable Debug level (0 or 1).
+#
+# 7. (Done) Instead print what we are doing only and to what device / colors.
+#
+# 8. Display Spinner while waiting for each task to finish (especially useful for mkfs command)
+#    https://unix.stackexchange.com/questions/225179/
+#
+# 9. Filters.
+#
+# 10. New Function: If any of the selected disks has a mount point, then ignore this disk, list the 
+#     partition(s) and their mount points with a message: 'lsblk --nodeps -o name,size,serial,mountpoint
+#     /dev/${DISK} | grep sd' Disk /dev/${DISK}'1' is mounted on ${MOUNTPOINT} - ignoring disk.
+#
+# 11. Before doing any destructive action on a disk, search for partitions and filesystems. If any of the selected
+#     disks has file(s), then ignore this disk, list the partition(s) and their mount points with a message: 
+#     'lsblk --nodeps -o name,size,serial, mountpoint /dev/${DISK} | grep sd' Disk /dev/${DISK}'1' is mounted on 
+#     ${MOUNTPOINT} - ignoring disk. Have an option --delete-existing-data to override this behaviour.
+#
+# 12. (Postponed) Add support for extended drive ranges: sda-sdzz
+#
+# 13. (Done) Bash output:
+#     If the status is OK, we only show "OK" (in green)
+#     If the status is an error, we show the error message in the user shell (in red).
+#
+# 14. (Done) new function: --write-sn, which creates an empty file named after the serial number in the filesystem (touch ${SN})
+#
+#########################################################################################################
+
+###################################
+#        F U N C T I O N S        #
+###################################
+
+wipe()
+{
+	for i in "$@"
+	do
+        	DEVICE=/dev/${i}
+		
+		# If the device is already mounted, don't perform any destructive action on it
+#		lsblk -n ${DEVICE} -l -o mountpoint | grep ${i} && echo "Disk ${DEVICE}'1' is mounted on ${MOUNTPOINT} - ignoring disk."; continue
+	
+		# Wipe the Disk
+		case ${DEBUGLEVEL} in
+			0) wipefs -a ${DEVICE} >  /dev/null  2>&1 && echo -e "${i}...${GREEN}OK${NOCOLOR}" || echo -e "${i}...${RED}NOT OK${NOCOLOR}";;
+			1) wipefs -a ${DEVICE} >> ${LOGFILE} 2>&1 && echo -e "${i}...${GREEN}OK${NOCOLOR}" || echo -e "${i}...${RED}NOT OK${NOCOLOR}";;
+		esac
+
+		sync
+	done
+}
+
+format()
+{
+	for i in "$@"
+	do
+		DEVICE=/dev/${i}
+
+		# If the device is already mounted, don't perform any destructive action on it
+#		lsblk -n ${DEVICE} -l -o mountpoint | grep ${i} && echo "Disk ${DEVICE}'1' is mounted on ${MOUNTPOINT} - ignoring disk."; continue
+		
+		# Partition the Disk
+		case ${DEBUGLEVEL} in
+			0) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >  /dev/null  2>&1 && echo -e "${i}...${GREEN}OK${NOCOLOR}" || echo -e "${i}...${RED}NOT OK${NOCOLOR}";;
+			1) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >> ${LOGFILE} 2>&1 && echo -e "${i}...${GREEN}OK${NOCOLOR}" || echo -e "${i}...${RED}NOT OK${NOCOLOR}";;
+		esac
+
+		# Get serial number of Disk
+		SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
+
+                # Create filesystem ext4 for large files, no reserved space and label partition
+		case ${DEBUGLEVEL} in
+			0) mkfs.ext4 ${MKFSOPTIONS} "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >  /dev/null  2>&1 && echo -e "mkfs on ${i}...${GREEN}OK${NOCOLOR}" || echo -e "mkfs on ${i}...${RED}NOT OK${NOCOLOR}";;
+			1) mkfs.ext4 ${MKFSOPTIONS} "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >> ${LOGFILE} 2>&1 && echo -e "mkfs on ${i}...${GREEN}OK${NOCOLOR}" || echo -e "mkfs on ${i}...${RED}NOT OK${NOCOLOR}";;
+		esac
+
+		echo ""
+	done
+}
+
+label()
+{
+	for i in "$@"
+	do
+        	DEVICE=/dev/${i}
+
+		# Get serial number of disk
+		SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
+
+		# Label the partition
+		case ${DEBUGLEVEL} in
+			0) tune2fs -L "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >  /dev/null   2>&1 && echo -e "${i}...${GREEN}OK${NOCOLOR}" || echo -e "${i}...${RED}NOT OK${NOCOLOR}";;
+			1) tune2fs -L "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >> ${LOGFILE}  2>&1 && echo -e "${i}...${GREEN}OK${NOCOLOR}" || echo -e "${i}...${RED}NOT OK${NOCOLOR}";;
+		esac
+	done
+}
+
+write-sn()
+{
+	for i in "$@"
+	do
+        	DEVICE=/dev/${i}
+		MOUNTPOINT=/mnt/chiaman
+
+		# Get serial number of disk
+		SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
+
+		mkdir -p ${MOUNTPOINT}/${i}1
+		mount ${DEVICE}1 ${MOUNTPOINT}/${i}1
+		touch ${MOUNTPOINT}/${i}1/${SERIALNR}
+		umount ${MOUNTPOINT}/${i}1
+		rm -r ${MOUNTPOINT}/${i}1
+	done
+}
+
+warningmesg()
+{
+	ACTIONS="$1"
+	DEVICEOPTIONSLIST="$2"
+
+	echo "Welcome to chiaman V(${VERSION})"
+	echo ""
+	echo "You have chosen to perform the following actions: ${BOLD}${ACTIONS}${NORM}"
+	echo "on disks: ${BOLD}${DEVICEOPTIONSLIST}${NORM}"
+
+	grep -wqe "format\|wipe" <<< ${ACTIONS} && echo -e "\n${RED}WARNING!!\n\nThis is going to IRREVERSIBLY DESTROY all data on ${NOCOLOR}${BOLD}${DEVICEOPTIONSLIST}${NORM}\n"
+
+	read -p "Do you really want to do that? (y/n): " ANS
+	echo  ""
+
+	if [[ ${ANS} == [nN] ]] 
+	then
+		case ${DEBUGLEVEL} in
+			0) exit 1;;
+
+			1) echo "> END: ${TIMESTAMP} ---------------------------------------------------------" >> ${LOGFILE}
+			   exit 1;;
+		esac
+	fi
+}
+
+
+###################################
+#      M A I N    L O G I C       #
+###################################
+
+# Variables
+VERSION="0.8"
+LOGFILE="./chiaman.log"
+TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
+DEBUGLEVEL=1
+SERIALNRPREFIX="CHIA-"
+MKFSOPTIONS=" -F -m 0 -T largefile4 -L "
+
+RED="\033[1;31m"
+GREEN="\033[1;32m"
+NOCOLOR="\033[0m"
+NORM=`tput sgr0`
+BOLD=`tput bold`
+REV=`tput smso`
+
+WORDOPTIONSLIST=""
+DEVICEOPTIONSLIST=""
+
+# Send output and error to log file
+if [[ ${DEBUGLEVEL} -eq 1 ]]
+then
+	exec > >(tee -a ${LOGFILE})
+	exec 2>&1
+fi
+
+echo ""
+echo "------------------------------------------------------------------------------------"
+echo "BEGIN: ${BOLD}${TIMESTAMP}${NORM}"
+echo "------------------------------------------------------------------------------------"
+
+# Process all the arguments given to the script
+for i in "$@"
+do
+	# Get the first two characters of the option
+	FIRSTTWOCHAR=$(echo $i | cut -c1-2)
+
+	# It is a word option if the first two characters are hyphens
+	if [[ ${FIRSTTWOCHAR} == "--" ]]
+	then
+		REMAININGWORDOPTION=$(echo "${i:2}")
+		WORDOPTIONSLIST="${WORDOPTIONSLIST} ${REMAININGWORDOPTION}"
+
+	# If not, then look for hyphen in the option. If it exists, it is a device range option
+	elif [[ $i =~ "-" ]]
+	then
+		# Extract first and last device names
+		FIRSTDEVICE=$(echo $i | cut -d'-' -f1)
+		LASTDEVICE=$(echo $i | cut -d'-' -f2)
+
+		# Calculate their lengths
+		LENFIRSTDEVICE=$(echo ${#FIRSTDEVICE})
+		LENLASTDEVICE=$(echo ${#LASTDEVICE})
+
+		# Find the device prefix from first device
+		DEVPREFIX=$(echo ${FIRSTDEVICE%?})
+
+		# Find the difference in length between both devices
+		LENDIFF=$((LENLASTDEVICE - LENFIRSTDEVICE))
+
+		echo FIRSTDEVICE is $FIRSTDEVICE
+		echo LASTDEVICE is $LASTDEVICE
+		echo DEVPREFIX is $DEVPREFIX
+		echo LENDIFF is $LENDIFF
+
+		case ${LENDIFF} in
+			0) FIRSTLTR3=$(echo "${FIRSTDEVICE: -1}")
+			   LASTLTR3=$(echo "${LASTDEVICE: -1}")
+			   echo "In 0. FIRSTLTR is $FIRSTLTR  LASTLTR is $LASTLTR."
+			   EXPANDEDLIST=$(eval echo ${DEVPREFIX}{$FIRSTLTR3..$LASTLTR3});;
+
+			1) FIRSTLTR3=$(echo "${FIRSTDEVICE: -1}")
+			   LASTLTR4=$(echo "${LASTDEVICE: -1}")
+			   LASTLTR3=$(echo "${LASTDEVICE: -2}" | cut -c1)
+			   NUMLASTLTR3=$(printf "%d\n" \'$LASTLTR3)
+			   let NUMLASTLTR3=$NUMLASTLTR3-1
+			   LASTLTR3PREV=$(printf "\x$(printf %x $NUMLASTLTR3)")
+
+			   echo "In 1. FIRSTLTR3 is $FIRSTLTR3  LASTLTR4 is $LASTLTR4 LASTLTR3 is $LASTLTR3."
+			   LIST1=$(eval echo ${DEVPREFIX}{$FIRSTLTR3..z})
+			   LIST2=$(eval echo ${DEVPREFIX}{a..$LASTLTR3PREV}{a..z})
+			   LIST3=$(eval echo ${DEVPREFIX}$LASTLTR3$LASTLTR4)
+			   EXPANDEDLIST=$(echo $LIST1 $LIST2 $LIST3);;
+	        esac
+
+		DEVICEOPTIONSLIST="${DEVICEOPTIONSLIST} ${EXPANDEDLIST}"
+
+	# Else, consider it as a single device option
+	else
+		DEVICEOPTIONSLIST="${DEVICEOPTIONSLIST} ${i}"
+	fi
+done
+	
+# If no disks are given, exit the script.
+if [[ -z ${DEVICEOPTIONSLIST} ]]
+then
+	echo "No disks given. Exiting..."
+	echo "> END: ${TIMESTAMP}-------------------------------------------------------" >> ${LOGFILE}
+	exit 1
+
+# If no word options but only device names are given as arguments, 
+# then specify all actions explicitly.
+elif [[ -z ${WORDOPTIONSLIST} ]]
+then
+	ACTIONS="wipe format label write-sn"
+	warningmesg "${ACTIONS}" "${DEVICEOPTIONSLIST}"
+# Else, run the specified action on all the devices given as arguments
+else
+	ACTIONS="${WORDOPTIONSLIST}"
+	warningmesg "${ACTIONS}" "${DEVICEOPTIONSLIST}"
+fi
+
+for ACTION in ${ACTIONS}
+do
+	case ${ACTION} in
+		wipe) 		echo -e		"${BOLD}\nWiping${NORM}"
+				wipe    	${DEVICEOPTIONSLIST};;
+
+		format) 	echo -e		"${BOLD}\nFormatting${NORM}"
+				format  	${DEVICEOPTIONSLIST};;
+
+		label)		echo -e		"${BOLD}\nLabelling${NORM}"
+				label   	${DEVICEOPTIONSLIST};;
+
+		write-sn)	echo -e		"${BOLD}\nWriting empty serialfile${NORM}"
+				write-sn   	${DEVICEOPTIONSLIST};;
+
+		*)		echo    	"Invalid action specified";;
+	esac
+done
+
+echo -e "\n\n> END: ${TIMESTAMP} ----------------------------------------------------------------"
+#
+#END#
+#########################################################################################################
