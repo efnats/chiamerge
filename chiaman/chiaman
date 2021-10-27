@@ -19,14 +19,14 @@
 #
 # Arguments:	one or more disknames (eg: sda sdb-sdd)
 #
-# Usage 1: 	chiaman.sh <diskname>...	
-# Example:	chiaman.sh sda
-#		chiaman.sh sda-sdd
-#		chiaman.sh sda sdd-sdf sdj
+# Usage 1: 	chiaman <diskname>...	
+# Example:	chiaman sda
+#		chiaman sda-sdd
+#		chiaman sda sdd-sdf sdj
 #
-# Usage 2:	chiaman.sh <action> <diskname> <disknamerange> ... (in any order)
-# Example:	chiaman.sh --wipe sda sdc-sdg sdh
-#		chiaman.sh --wipe sda sdb --format sdc
+# Usage 2:	chiaman <action> <diskname> <disknamerange> ... (in any order)
+# Example:	chiaman --wipe sda sdc-sdg sdh
+#		chiaman --wipe sda sdb --format sdc
 #
 # To Do:
 # -----
