@@ -3,7 +3,7 @@
 # Name:         chiaman
 # Author:       efnats
 # Date:         Okt 27, 2021
-# Version:      0.8
+# Version:      0.81
 # Purpose:
 #
 # Syntax:	chiaman.sh [--option] arguments...
@@ -85,9 +85,14 @@ wipe()
 #		lsblk -n ${DEVICE} -l -o mountpoint | grep ${i} && echo "Disk ${DEVICE}'1' is mounted on ${MOUNTPOINT} - ignoring disk."; continue
 	
 		# Wipe the Disk
+		echo -n "${i}..."
+		
 		case ${DEBUGLEVEL} in
-			0) wipefs -a ${DEVICE} >  /dev/null  2>&1 && echo -e "${i}...${GREEN}OK${NOCOLOR}" || echo -e "${i}...${RED}NOT OK${NOCOLOR}";;
-			1) wipefs -a ${DEVICE} >> ${LOGFILE} 2>&1 && echo -e "${i}...${GREEN}OK${NOCOLOR}" || echo -e "${i}...${RED}NOT OK${NOCOLOR}";;
+			0) wipefs -a ${DEVICE} >  /dev/null  2>&1;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+
+			1) wipefs -a ${DEVICE} >> ${LOGFILE} 2>&1; 
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
 		esac
 
 		sync
@@ -102,20 +107,30 @@ format()
 
 		# If the device is already mounted, don't perform any destructive action on it
 #		lsblk -n ${DEVICE} -l -o mountpoint | grep ${i} && echo "Disk ${DEVICE}'1' is mounted on ${MOUNTPOINT} - ignoring disk."; continue
-		
+
 		# Partition the Disk
+		echo -n "Partitionning ${i}..."
+
 		case ${DEBUGLEVEL} in
-			0) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >  /dev/null  2>&1 && echo -e "${i}...${GREEN}OK${NOCOLOR}" || echo -e "${i}...${RED}NOT OK${NOCOLOR}";;
-			1) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >> ${LOGFILE} 2>&1 && echo -e "${i}...${GREEN}OK${NOCOLOR}" || echo -e "${i}...${RED}NOT OK${NOCOLOR}";;
+			0) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >  /dev/null  2>&1; 
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+
+			1) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >> ${LOGFILE} 2>&1; 
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
 		esac
 
 		# Get serial number of Disk
 		SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
 
                 # Create filesystem ext4 for large files, no reserved space and label partition
+		echo -n "formatting partition ${i}1..."
+
 		case ${DEBUGLEVEL} in
-			0) mkfs.ext4 ${MKFSOPTIONS} "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >  /dev/null  2>&1 && echo -e "mkfs on ${i}...${GREEN}OK${NOCOLOR}" || echo -e "mkfs on ${i}...${RED}NOT OK${NOCOLOR}";;
-			1) mkfs.ext4 ${MKFSOPTIONS} "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >> ${LOGFILE} 2>&1 && echo -e "mkfs on ${i}...${GREEN}OK${NOCOLOR}" || echo -e "mkfs on ${i}...${RED}NOT OK${NOCOLOR}";;
+			0) mkfs.ext4 ${MKFSOPTIONS} "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >  /dev/null  2>&1; 
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+
+			1) mkfs.ext4 ${MKFSOPTIONS} "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >> ${LOGFILE} 2>&1; 
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
 		esac
 
 		echo ""
@@ -132,9 +147,14 @@ label()
 		SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
 
 		# Label the partition
+		echo -n "${i}..."
+
 		case ${DEBUGLEVEL} in
-			0) tune2fs -L "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >  /dev/null   2>&1 && echo -e "${i}...${GREEN}OK${NOCOLOR}" || echo -e "${i}...${RED}NOT OK${NOCOLOR}";;
-			1) tune2fs -L "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >> ${LOGFILE}  2>&1 && echo -e "${i}...${GREEN}OK${NOCOLOR}" || echo -e "${i}...${RED}NOT OK${NOCOLOR}";;
+			0) tune2fs -L "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >  /dev/null   2>&1; 
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+
+			1) tune2fs -L "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >> ${LOGFILE}  2>&1; 
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
 		esac
 	done
 }
@@ -149,9 +169,12 @@ write-sn()
 		# Get serial number of disk
 		SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
 
+		# Write serian number
+		echo -n "${i}..."
+
 		mkdir -p ${MOUNTPOINT}/${i}1
 		mount ${DEVICE}1 ${MOUNTPOINT}/${i}1
-		touch ${MOUNTPOINT}/${i}1/${SERIALNR}
+		touch ${MOUNTPOINT}/${i}1/${SERIALNR} && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}"
 		umount ${MOUNTPOINT}/${i}1
 		rm -r ${MOUNTPOINT}/${i}1
 	done
@@ -189,7 +212,7 @@ warningmesg()
 ###################################
 
 # Variables
-VERSION="0.8"
+VERSION="0.81"
 LOGFILE="./chiaman.log"
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
 DEBUGLEVEL=1
@@ -213,10 +236,10 @@ then
 	exec 2>&1
 fi
 
-echo ""
-echo "------------------------------------------------------------------------------------"
-echo "BEGIN: ${BOLD}${TIMESTAMP}${NORM}"
-echo "------------------------------------------------------------------------------------"
+echo ""											    >> ${LOGFILE}
+echo "------------------------------------------------------------------------------------" >> ${LOGFILE}
+echo "BEGIN: ${BOLD}${TIMESTAMP}${NORM}"						    >> ${LOGFILE}
+echo "------------------------------------------------------------------------------------" >> ${LOGFILE}
 
 # Process all the arguments given to the script
 for i in "$@"
@@ -318,7 +341,9 @@ do
 	esac
 done
 
-echo -e "\n\n> END: ${TIMESTAMP} ----------------------------------------------------------------"
+TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
+
+echo -e "\n\n> END: ${TIMESTAMP} ----------------------------------------------------------------" >> ${LOGFILE}
 #
 #END#
 #########################################################################################################
