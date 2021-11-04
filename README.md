@@ -8,10 +8,20 @@ The toolset constists of a chain of tools that will automate the process a bit.
 
 
 chiaman: any given disks will be wiped, one large partition is created, formatted, labelled by CHIA-serialnr and an empty file with the filename of the serialnr is created in the main folder of the disk.
+
 mnt-garden.mount: mount all disks that have the pattern CHIA in their disk name into one mergerfs mountpoint. the default is /mnt/garden
+
 mount-chia-drives.service: is called by mnt-garden.mount and will use udisks to mount all drives correctly in /media/root/ preparing it for the mergerfs mount.
 
 BEWARE!!! CHIAMAN HAS FUNCTIONS THAT WILL DESTROY ANY DATA ON THE DISK YOU HAVE GIVEN IT TO WORK ON. All destructive functions come with a warning (y/n) for you to decide. BUT TAKE CARE!!
+
+requirements
+------------
+this toolset is developed on ubuntu server 20.04.2 but will likely work on any systemd based linux
+
+mergerfs - this is where the magic happens. Thank you trapexit!
+
+udisks - needed for the mount serivce. On ubuntu20.04 apt will install 2.8.4-1ubuntu1 by default. Manually install 2.8.4-1ubuntu2 to make it more stable
 
 
 
@@ -76,3 +86,6 @@ In this scenario where (starting with empty disks) plot2.plot will be written to
 NOTE: upon starting mnt-garden.mount the chia-mount.service is being executed automatically. Stopping the mnt-garden.mount will NOT unmount the drives from the system, but only the mergerfs mountpoint. If you want to unmount all disks you should stop the mount-chia-drives.service
 
 
+install.sh
+----------
+A very basic fist version of the installer
