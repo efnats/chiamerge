@@ -88,10 +88,10 @@ wipe()
 		echo -n "${i}..."
 		
 		case ${DEBUGLEVEL} in
-			0) wipefs -a ${DEVICE} >  /dev/null  2>&1;
+			0) wipefs -a ${DEVICE} >  /dev/null  2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
 
-			1) wipefs -a ${DEVICE} >> ${LOGFILE} 2>&1; 
+			1) wipefs -a ${DEVICE} >> ${LOGFILE} 2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
 		esac
 
@@ -109,13 +109,13 @@ format()
 #		lsblk -n ${DEVICE} -l -o mountpoint | grep ${i} && echo "Disk ${DEVICE}'1' is mounted on ${MOUNTPOINT} - ignoring disk."; continue
 
 		# Partition the Disk
-		echo -n "Partitionning ${i}..."
+		echo -n "${i}..."
 
 		case ${DEBUGLEVEL} in
-			0) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >  /dev/null  2>&1; 
+			0) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >  /dev/null  2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
 
-			1) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >> ${LOGFILE} 2>&1; 
+			1) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >> ${LOGFILE} 2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
 		esac
 
@@ -123,13 +123,13 @@ format()
 		SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
 
                 # Create filesystem ext4 for large files, no reserved space and label partition
-		echo -n "formatting partition ${i}1..."
+		echo -n "mkfs on ${i}..."
 
 		case ${DEBUGLEVEL} in
-			0) mkfs.ext4 ${MKFSOPTIONS} "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >  /dev/null  2>&1; 
+			0) mkfs.ext4 ${MKFSOPTIONS} "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >  /dev/null  2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
 
-			1) mkfs.ext4 ${MKFSOPTIONS} "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >> ${LOGFILE} 2>&1; 
+			1) mkfs.ext4 ${MKFSOPTIONS} "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >> ${LOGFILE} 2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
 		esac
 
@@ -150,10 +150,10 @@ label()
 		echo -n "${i}..."
 
 		case ${DEBUGLEVEL} in
-			0) tune2fs -L "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >  /dev/null   2>&1; 
+			0) tune2fs -L "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >  /dev/null   2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
 
-			1) tune2fs -L "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >> ${LOGFILE}  2>&1; 
+			1) tune2fs -L "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >> ${LOGFILE}  2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
 		esac
 	done
@@ -174,7 +174,15 @@ write-sn()
 
 		mkdir -p ${MOUNTPOINT}/${i}1
 		mount ${DEVICE}1 ${MOUNTPOINT}/${i}1
-		touch ${MOUNTPOINT}/${i}1/${SERIALNR} && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}"
+
+		case ${DEBUGLEVEL} in
+			0) touch ${MOUNTPOINT}/${i}1/${SERIALNR} >  /dev/null  2>&1
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+
+			1) touch ${MOUNTPOINT}/${i}1/${SERIALNR} >> ${LOGFILE} 2>&1
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+		esac
+
 		umount ${MOUNTPOINT}/${i}1
 		rm -r ${MOUNTPOINT}/${i}1
 	done
