@@ -62,7 +62,7 @@ write-sn: the empty file named after the serialnr helps to identify disks that a
 
 mount-chia-drives.service
 ------------------
-usage: systemctl (start|stop) chia-mount.service
+usage: systemctl (start|stop) mount-chia-drives.service
 
 Will call /usr/local/bin/chia-mountall which will mount all disks in the system that have the pattern "CHIA" in their label into /media/root/[LABELNAME] where they will be picked up by the mnt-garden.mount to mount in single folder using mergerfs
 
