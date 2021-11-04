@@ -53,9 +53,9 @@ Calling chiaman without any commands is the same as calling chiaman with all com
 I guess wipe and format are self explanatory.
 Here is the explanation for the somewhat odd functions label and write
 
-    label: will prepare the disk so that it can be picked up be the mount service later and mounted into the mergerfs mountpoint. This will prevent other disks, like systemdisks etc to be mounted into mergerfs mountpoint /mnt/garden. (Unless you have the pattern CHIA in its label). Label is a non-destructive action. You will not lose your data on an EXT4 disk by changing its label.
+label: will prepare the disk so that it can be picked up be the mount service later and mounted into the mergerfs mountpoint. This will prevent other disks, like systemdisks etc to be mounted into mergerfs mountpoint /mnt/garden. (Unless you have the pattern CHIA in its label). Label is a non-destructive action. You will not lose your data on an EXT4 disk by changing its label.
 
-    write-sn: the empty file named after the serialnr helps to identify disks that are missing from the system (eg. because of a broken SATA cable). Enter the mergerfs dir (/mnt/garden) and count the amount of empty serialnr-files. It should match the amount of disks in your system. If one is missing find the missing serialnr in the folder. PRO-TIP: use your phone's bar code reader. Most disks have their serialnr encoded on the end of the disk. write-sn will only work on preformatted disks as the filesytem will be mounted shortly for that in a temporary folder.
+write-sn: the empty file named after the serialnr helps to identify disks that are missing from the system (eg. because of a broken SATA cable). Enter the mergerfs dir (/mnt/garden) and count the amount of empty serialnr-files. It should match the amount of disks in your system. If one is missing find the missing serialnr in the folder. PRO-TIP: use your phone's bar code reader. Most disks have their serialnr encoded on the end of the disk. write-sn will only work on preformatted disks as the filesytem will be mounted shortly for that in a temporary folder.
 
 
 
