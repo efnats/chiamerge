@@ -2,7 +2,7 @@
 #
 # Name:         chiaman
 # Author:       efnats
-# Date:         Okt 27, 2021
+# Date:         Nov 4, 2021
 # Version:      0.82
 # Purpose:
 #
@@ -31,43 +31,17 @@
 # To Do:
 # -----
 #
-# 1. (Done) Don't warn the user if only labelling has been selected.
-#
-# 2. (Done) Have a set of variables at the beginning of the script to select mkfs.ext4 options 
-#    (but always include the -L option for labelling).
-#
-# 3. (Done) Define the pattern that should be set before the SERIALNR in labelling (Default: CHIA- ).
-#
-# 4. Make a help text the the options overview; print it when script is called with -h, --help
+# 1. help text the the options overview; print it when script is called with -h, --help
 #    or without any arguments.
 #
-# 5. (Done) Suppress the bash outputs of the used programs and pipe them into a logfile with timestamps.
-#
-# 6. (Done) Flag to enable or disable Debug level (0 or 1).
-#
-# 7. (Done) Instead print what we are doing only and to what device / colors.
-#
-# 8. Display Spinner while waiting for each task to finish (especially useful for mkfs command)
+# 2. Display Spinner while waiting for each task to finish (especially useful for mkfs command)
 #    https://unix.stackexchange.com/questions/225179/
 #
-# 9. Filters.
+# 3. Filters for hhds. Replace selection of hdds with an array gathered from lsblk
 #
-# 10. New Function: If any of the selected disks has a mount point, then ignore this disk, list the 
-#     partition(s) and their mount points with a message: 'lsblk --nodeps -o name,size,serial,mountpoint
-#     /dev/${DISK} | grep sd' Disk /dev/${DISK}'1' is mounted on ${MOUNTPOINT} - ignoring disk.
+# 4. Ignore the disk if it has a mount point
 #
-# 11. Before doing any destructive action on a disk, search for partitions and filesystems. If any of the selected
-#     disks has file(s), then ignore this disk, list the partition(s) and their mount points with a message: 
-#     'lsblk --nodeps -o name,size,serial, mountpoint /dev/${DISK} | grep sd' Disk /dev/${DISK}'1' is mounted on 
-#     ${MOUNTPOINT} - ignoring disk. Have an option --delete-existing-data to override this behaviour.
-#
-# 12. (Postponed) Add support for extended drive ranges: sda-sdzz
-#
-# 13. (Done) Bash output:
-#     If the status is OK, we only show "OK" (in green)
-#     If the status is an error, we show the error message in the user shell (in red).
-#
-# 14. (Done) new function: --write-sn, which creates an empty file named after the serial number in the filesystem (touch ${SN})
+# 5. (Postponed) Add support for extended drive ranges: sda-sdzz
 #
 #########################################################################################################
 

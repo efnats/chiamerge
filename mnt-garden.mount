@@ -1,5 +1,5 @@
 [Unit]
-Description = Mount mergerfs volume
+Description = Mount mergerfs volume from chia-labelled disks
 Requires = mount-chia-drives.service
 After = mount-chia-drives.service
 
