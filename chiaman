@@ -150,10 +150,10 @@ write-sn()
 		mount ${DEVICE}1 ${MOUNTPOINT}/${i}1
 
 		case ${DEBUGLEVEL} in
-			0) touch ${MOUNTPOINT}/${i}1/${SERIALNR} >  /dev/null  2>&1
+			0) mkdir -p ${MOUNTPOINT}/${i}1/serial && touch ${MOUNTPOINT}/${i}1/serial/${SERIALNR} >  /dev/null  2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
 
-			1) touch ${MOUNTPOINT}/${i}1/${SERIALNR} >> ${LOGFILE} 2>&1
+			1) mkdir -p ${MOUNTPOINT}/${i}1/serial && touch ${MOUNTPOINT}/${i}1/serial/${SERIALNR} >> ${LOGFILE} 2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
 		esac
 
