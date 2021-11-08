@@ -9,7 +9,7 @@ read -p "Continue? (y/n)" ANS
 echo ""
 sudo mkdir -p /mnt/garden
 sudo apt install -y udisks mergerfs
-sudo cp -v mnt.garden.mount /etc/systemd/system/
+sudo cp -v mnt-garden.mount /etc/systemd/system/
 sudo cp -v mount-chia-drives.service /etc/systemd/system/
 sudo cp -v chia-mountall /usr/local/bin
 sudo cp -v chia-unmountall /usr/local/bin
