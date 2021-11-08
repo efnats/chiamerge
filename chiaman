@@ -2,22 +2,25 @@
 #
 # Name:         chiaman
 # Author:       efnats
-# Date:         Nov 4, 2021
-# Version:      0.82
 # Purpose:
 #
-# Syntax:	chiaman.sh [--option] arguments...
-#		- options are actions to be performed
-#		- argements are disknames
+# Syntax:	chiaman.sh  [--option]...  arguments...
 #
-# Options:	--wipe
+#		- options are actions to be performed
+#		- arguments are disknames
+#
+# Options:	--init-and-format-disk (same as: --wipe --format --label --write-sn)
+#		--wipe
 #	 	--format
 #		--label
 #		--write-sn
+#		--help
 #
-# If no option is given, all the three above actions are performed on given disks.
+# If no option is given, help is shown and the script exits.
 #
 # Arguments:	one or more disknames (eg: sda sdb-sdd)
+#
+# At least one argument (diskname) is to be given to the script.
 #
 # Usage 1: 	chiaman <diskname>...	
 # Example:	chiaman sda
@@ -48,6 +51,43 @@
 ###################################
 #        F U N C T I O N S        #
 ###################################
+
+help()
+{
+	USAGE="$(basename "$0") [--option]...  argument..."
+	echo ${USAGE}
+	cat <<END		
+
+		- options are actions to be performed
+		- argements are disknames
+
+ Options:	--chia-init-disk (same as: --wipe --format --label --write-sn)
+		--wipe
+	 	--format
+		--label
+		--write-sn
+		--help
+
+ If no option is given, help is shown and the script exits.
+
+ Arguments:	one or more disknames (eg: sda sdb-sdd)
+
+ At least one argument (diskname) is to be given to the script.
+
+ Usage 1: 	chiaman <diskname>...	
+ Example:	chiaman sda
+		chiaman sda-sdd
+		chiaman sda sdd-sdf sdj
+
+ Usage 2:	chiaman <action> <diskname> <disknamerange> ... (in any order)
+ Example:	chiaman --wipe sda sdc-sdg sdh
+		chiaman --wipe sda sdb --format sdc
+END
+
+	echo "> END: ${TIMESTAMP}-------------------------------------------------------" >> ${LOGFILE}
+
+	exit
+}
 
 wipe()
 {
@@ -194,7 +234,7 @@ warningmesg()
 ###################################
 
 # Variables
-VERSION="0.81"
+VERSION="0.83"
 LOGFILE="./chiaman.log"
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
 DEBUGLEVEL=1
@@ -252,15 +292,15 @@ do
 		# Find the difference in length between both devices
 		LENDIFF=$((LENLASTDEVICE - LENFIRSTDEVICE))
 
-		echo FIRSTDEVICE is $FIRSTDEVICE
-		echo LASTDEVICE is $LASTDEVICE
-		echo DEVPREFIX is $DEVPREFIX
-		echo LENDIFF is $LENDIFF
+		#echo FIRSTDEVICE is $FIRSTDEVICE
+		#echo LASTDEVICE is $LASTDEVICE
+		#echo DEVPREFIX is $DEVPREFIX
+		#echo LENDIFF is $LENDIFF
 
 		case ${LENDIFF} in
 			0) FIRSTLTR3=$(echo "${FIRSTDEVICE: -1}")
 			   LASTLTR3=$(echo "${LASTDEVICE: -1}")
-			   echo "In 0. FIRSTLTR is $FIRSTLTR  LASTLTR is $LASTLTR."
+			   #echo "In 0. FIRSTLTR is $FIRSTLTR  LASTLTR is $LASTLTR."
 			   EXPANDEDLIST=$(eval echo ${DEVPREFIX}{$FIRSTLTR3..$LASTLTR3});;
 
 			1) FIRSTLTR3=$(echo "${FIRSTDEVICE: -1}")
@@ -270,7 +310,7 @@ do
 			   let NUMLASTLTR3=$NUMLASTLTR3-1
 			   LASTLTR3PREV=$(printf "\x$(printf %x $NUMLASTLTR3)")
 
-			   echo "In 1. FIRSTLTR3 is $FIRSTLTR3  LASTLTR4 is $LASTLTR4 LASTLTR3 is $LASTLTR3."
+			   #echo "In 1. FIRSTLTR3 is $FIRSTLTR3  LASTLTR4 is $LASTLTR4 LASTLTR3 is $LASTLTR3."
 			   LIST1=$(eval echo ${DEVPREFIX}{$FIRSTLTR3..z})
 			   LIST2=$(eval echo ${DEVPREFIX}{a..$LASTLTR3PREV}{a..z})
 			   LIST3=$(eval echo ${DEVPREFIX}$LASTLTR3$LASTLTR4)
@@ -284,29 +324,51 @@ do
 		DEVICEOPTIONSLIST="${DEVICEOPTIONSLIST} ${i}"
 	fi
 done
-	
-# If no disks are given, exit the script.
+
+DEVICEOPTIONSLIST=$(echo ${DEVICEOPTIONSLIST} | xargs)
+WORDOPTIONSLIST=$(echo ${WORDOPTIONSLIST} | xargs)
+
+#echo "DEVICEOPTIONSLIST is ${DEVICEOPTIONSLIST}"
+#echo "WORDOPTIONSLIST   is ${WORDOPTIONSLIST}"
+
+# If no disk(s) given
 if [[ -z ${DEVICEOPTIONSLIST} ]]
 then
-	echo "No disks given. Exiting..."
-	echo "> END: ${TIMESTAMP}-------------------------------------------------------" >> ${LOGFILE}
-	exit 1
-
-# If no word options but only device names are given as arguments, 
-# then specify all actions explicitly.
-elif [[ -z ${WORDOPTIONSLIST} ]]
+	# and no word options given, default to --help optiion.
+	if [[ -z ${WORDOPTIONSLIST} ]] || [[ ${WORDOPTIONSLIST} == "help" ]]
+	then
+		ACTIONS="help"
+		echo "Welcome to chiaman V(${VERSION})"
+		echo ""
+		help
+	fi
+# If disk(s) given and action given is: chia-init-disk
+elif [[ "${WORDOPTIONSLIST}" == "chia-init-disk" ]]
 then
 	ACTIONS="wipe format label write-sn"
 	warningmesg "${ACTIONS}" "${DEVICEOPTIONSLIST}"
+
+# If disk(s) given and action given is: help
+elif [[ ${WORDOPTIONSLIST} == "help" ]]
+then
+		ACTIONS="help"
+		echo "Welcome to chiaman V(${VERSION})"
+		echo ""
+		help
+
 # Else, run the specified action on all the devices given as arguments
 else
 	ACTIONS="${WORDOPTIONSLIST}"
 	warningmesg "${ACTIONS}" "${DEVICEOPTIONSLIST}"
 fi
 
+#echo "ACTIONS is ${ACTIONS}"
+
 for ACTION in ${ACTIONS}
 do
 	case ${ACTION} in
+		help)		help;;
+
 		wipe) 		echo -e		"${BOLD}\nWiping${NORM}"
 				wipe    	${DEVICEOPTIONSLIST};;
 
