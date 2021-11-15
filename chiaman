@@ -9,7 +9,7 @@
 #		- options are actions to be performed
 #		- arguments are disknames
 #
-# Options:	--init-and-format-disk (same as: --wipe --format --label --write-sn)
+# Options:	--chia-init-disk (same as: --wipe --format --label --write-sn)
 #		--wipe
 #	 	--format
 #		--label
