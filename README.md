@@ -131,6 +131,8 @@ Currently SAS drives are not supported, because hdparm is used to aquire the ser
 
 The installer needs to be better
 
+Extended disk ranges from sda-sdaz are not working. Whats working though is sda-sdz sdaa-sdaz so you can just combine the two. At a later stage I want to pull the disk names from lsblk.
+
 ## Socials
 
 -   @efnats
