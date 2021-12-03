@@ -18,5 +18,6 @@ sudo chmod +x /usr/local/bin/chia-mountall
 sudo chmod +x /usr/local/bin/chia-unmountall
 sudo chmod +x /usr/local/bin/chiaman
 sudo systemctl daemon-reload
+sudo systemctl restart mnt-garden.mount
 sudo systemctl enable mnt-garden.mount
 echo "done"
