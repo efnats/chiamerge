@@ -56,7 +56,7 @@ Usages:
     - `chiamerge --wipe sda sdc-sdg sdh`
     - `chiamerge --wipe sda sdb --format sdc`
 
-### Commands
+### Actions
 
 `--wipe` wipe **all information** from the drive using the wipefs command
 
