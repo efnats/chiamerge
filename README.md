@@ -114,6 +114,7 @@ A very basic first version of the installer.
 There is a configuration section in the chiamerge bash script.
 -   **FSTYPE** Use FTSYPE=EXT4 or FSTYPE=XFS
 -   **EXT4OPTIONS** and **XFSOPTIONS** will determine the options that mkfs will use to write the filesystem. The default options are optimized to fit as many plots as possible in the filesystem. If you have suggestions to improve do let me know.
+-   **DEBUGLEVEL** DEBUGLEVEL=0 to disable logging into ./chiamerge.log
 
 ### mnt-garden.mount
 
