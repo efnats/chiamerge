@@ -4,10 +4,13 @@
 
 <p>
     <a href="#About">About</a> •
+    <a href="#why-mergerfs">Why mergerfs?</a> •
+    <a href="#Description">Description?</a> •
     <a href="#Requirements">Requirements</a> •
     <a href="#Chiamerge">Chiamerge</a> •
     <a href="#Features">Features</a> •
     <a href="#Installation">Installation</a> •
+    <a href="#Configuration">Configuration</a> •
     <a href="#bugs-todo">Bugs / Todo</a>
 
 
@@ -16,7 +19,13 @@
 ## About
 
 If you agree that organizing a lot of hdds for chia farming/plotting should not be done in the fstab, read on.
-The toolset constists of a chain of tools that will automate the process for you. It consists of a bash tool called **chiamerge**, which will allow you to format and prepare multiple disks at once to be later picked up by the provided mount service **mnt-garden.mount** that handles which drives are being selected for the final mount directory.
+Here are some tools that will automate the process for you. It consists of a bash tool called **chiamerge**, which will allow you to format and prepare multiple disks at once to be later picked up by the provided mount service **mnt-garden.mount** that handles which drives are being selected for the final mount directory.
+
+## Why mergerfs?
+Mergerfs is a union filesystem that logically merges multiple paths together. There is no redunancy in mergerfs and this makes it a perfect match for chia plots, as there is no userdata stored, so that a lost disk drive can easily be replaced by simply replotting it. We don't use a blockdevice based filesystem like ZFS or LVM that will write over disk boundaries because the loss of one disk would then mean a loss of the entire dataset, which we cannot allow.
+The author of mergerfs is awesome, as you can see witness here: https://www.reddit.com/r/chia/comments/o7pxpz/mergerfs_and_chia/
+
+## Description
 
 -   **chiamerge**: any given disks will be wiped, one large partition is created, formatted, labelled by CHIA-serialnr and an empty file with the filename of the serialnr is created in the main folder of the disk.
 -   **mnt-garden.mount**: mount all disks that have the pattern CHIA in their disk label into one mergerfs mountpoint. the default is /mnt/garden
@@ -26,7 +35,7 @@ _BEWARE!!! CHIAMAN HAS FUNCTIONS THAT WILL DESTROY ANY DATA ON THE DISK YOU HAVE
 
 ## Requirements
 
-this toolset is tested on ubuntu server 20.04.2 but will likely work on any systemd based linux
+This toolset is tested on Ubuntu Server 20.04.2 but will likely work on any debian or systemd based linux
 
 mergerfs - this is where the magic happens. Thank you trapexit https://github.com/trapexit/mergerfs
 
@@ -40,15 +49,7 @@ one or more disknames (eg: `sda sdb-sdd`)
 
 Usages:
 
-1. `chiamerge diskname...`
-
-    Example:
-
-    - `chiamerge sda`
-    - `chiamerge sda-sdd`
-    - `chiamerge sda sdd-sdf sdj`
-
-2. `chiamerge <action> <diskname> <disknamerange> ...` (in any order)
+1. `chiamerge <action> <diskname> <range> ...` (in any order)
 
     Example:
 
@@ -65,7 +66,7 @@ Usages:
 
 `--write-sn` **aquire serialnr** of disk and **write** an empty file in the main folder of the partition which is called like the serialnr
 
-`--chia-init-disk` is the same as calling chiamerge with the actions (`--wipe`, `--format`, `--label`, `--write-sn`)
+`--chia-init-disk` is the same as calling chiamerge with the actions (`--wipe`, `--format`, `--label`, `--write-sn`). This the default intended behaviour to prepare hard drives.
 
 
 Here is the explanation for the somewhat odd functions label and write-sn
@@ -106,9 +107,28 @@ NOTE: upon starting **mnt-garden.mount** the **mount-chia-drives.service** is be
 
 A very basic first version of the installer.
 
+## Configuration
+
+### chiamerge
+
+There is a configuration section in the chiamerge bash script.
+-   **FSTYPE** Use FTSYPE=EXT4 or FSTYPE=XFS
+-   **EXT4OPTIONS** and **XFSOPTIONS** will determine the options that mkfs will use to write the filesystem. The default options are optimized to fit as many plots as possible in the filesystem. If you have suggestions to improve do let me know.
+
+### mnt-garden.mount
+
+Please refer to https://github.com/trapexit/mergerfs#options to determine whats best for you. Especially the write policy is important here as decribed above.
+
+
+### mnt-garden.mount
+
+The chia-mountall script in /usr/local/bin has rw (read/write) in the mount option set by default. If you're done plotting it would make sense to change this to ro (read-only)
+
 ## Bugs / Todo
 
 Currently SAS drives are not supported, because hdparm is used to aquire the serialnr. As https://github.com/augustynr pointed out (thx) this can be fixed by issuing smartctrl instead of hdparm, however this will break usb support. I will make SATA, SAS and USB work. Or will you do it?
+
+The installer needs to be better
 
 ## Socials
 

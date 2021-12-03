@@ -51,6 +51,17 @@
 #########################################################################################################
 
 ###################################
+#      Configuration       #
+###################################
+
+DEBUGLEVEL=1
+FSTYPE=xfs
+EXT4OPTIONS="-F -m 0 -T largefile4"
+XFSOPTIONS="-f -b size=1024"
+
+
+
+###################################
 #        F U N C T I O N S        #
 ###################################
 
@@ -326,16 +337,10 @@ warningmesg()
 ###################################
 
 # Variables
-VERSION="0.83"
+VERSION="0.84"
 LOGFILE="./chiamerge.log"
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
-DEBUGLEVEL=1
 SERIALNRPREFIX="CHIA-"
-FSTYPE=xfs
-EXT4OPTIONS="-F -m 0 -T largefile4"
-XFSOPTIONS="-f -b size=1024"
-#EXT4LABEL="tune2fs -L"
-#XFSLABEL="xfs_admin -L"
 
 
 RED="\033[1;31m"
