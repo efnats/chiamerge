@@ -8,7 +8,7 @@
     <a href="#Chiamerge">Chiamerge</a> •
     <a href="#Features">Features</a> •
     <a href="#Installation">Installation</a>
-    <a href="#Bugs / Todo">Bugs / Todo</a>
+    <a href="#bugs-todo">Bugs / Todo</a>
 
 
 </p>
