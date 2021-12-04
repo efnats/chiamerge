@@ -41,6 +41,8 @@ mergerfs - this is where the magic happens. Thank you trapexit https://github.co
 
 udisks - needed for the mount serivce. On ubuntu20.04 apt will install 2.8.4-1ubuntu1 by default. Manually install 2.8.4-1ubuntu2 to make it more stable
 
+smartmontools - to read out the serial number of hard disks
+
 ## Chiamerge
 
 ### Arguments
