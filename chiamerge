@@ -60,7 +60,6 @@ EXT4OPTIONS="-F -m 0 -T largefile4"
 XFSOPTIONS="-f -b size=1024"
 
 
-
 ###################################
 #        F U N C T I O N S        #
 ###################################
@@ -118,10 +117,10 @@ wipe()
 		
 		case ${DEBUGLEVEL} in
 			0) wipefs -a ${DEVICE} >  /dev/null  2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
 			1) wipefs -a ${DEVICE} >> ${LOGFILE} 2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 
 		sync
@@ -142,16 +141,14 @@ format()
 
 		case ${DEBUGLEVEL} in
 			0) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >  /dev/null  2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
 			1) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >> ${LOGFILE} 2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 
-		# Get serial number of Disk
-		#SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
-
-                # Create filesystem for large files, no reserved space
+		
+        # Create filesystem for large files, no reserved space
 		echo -n -ne creating $FSTYPE filesystem...'\t' "${i} "
 
 		case ${FSTYPE} in
@@ -162,10 +159,10 @@ format()
 
 		case ${DEBUGLEVEL} in
 			0) mkfs.${FSTYPE} ${FSOPTIONS} ${DEVICE}'1' >  /dev/null  2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
 			1) mkfs.${FSTYPE} ${FSOPTIONS} ${DEVICE}'1' >> ${LOGFILE} 2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 
 		echo ""
@@ -186,24 +183,21 @@ format-ext4()
 
 		case ${DEBUGLEVEL} in
 			0) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >  /dev/null  2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
 			1) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >> ${LOGFILE} 2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 
-		# Get serial number of Disk
-		#SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
-
-                # Create filesystem for large files, no reserved space
+		# Create filesystem for large files, no reserved space
 		echo -ne creating EXT4 filesystem...'\t' "${i} "
 
 		case ${DEBUGLEVEL} in
 			0) mkfs.ext4 ${EXT4OPTIONS} ${DEVICE}'1' >  /dev/null  2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
 			1) mkfs.ext4 ${EXT4OPTIONS} ${DEVICE}'1' >> ${LOGFILE} 2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 
 		echo ""
@@ -224,24 +218,21 @@ format-xfs()
 
 		case ${DEBUGLEVEL} in
 			0) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >  /dev/null  2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
 			1) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >> ${LOGFILE} 2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 
-		# Get serial number of Disk
-		SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
-
-                # Create filesystem for large files, no reserved space and label partition
+		# Create filesystem for large files, no reserved space and label partition
 		echo -ne creating XFS filesystem...'\t' "${i} "
 
 		case ${DEBUGLEVEL} in
 			0) mkfs.xfs ${XFSOPTIONS} ${DEVICE}'1' >  /dev/null  2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
 			1) mkfs.xfs ${XFSOPTIONS} ${DEVICE}'1' >> ${LOGFILE} 2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 
 		echo ""
@@ -255,7 +246,7 @@ label()
         	DEVICE=/dev/${i}
 
 		# Get serial number of disk
-		SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
+		SERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }')
 
 		# Label the partition
 		echo -ne labelling ${SERIALNRPREFIX}${SERIALNR}...'\t' "${i} "
@@ -268,10 +259,10 @@ label()
 
 		case ${DEBUGLEVEL} in
 			0) $LABEL "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >  /dev/null   2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
 			1) $LABEL "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >> ${LOGFILE}  2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 	done
 }
@@ -284,7 +275,7 @@ write-sn()
 		MOUNTPOINT=/mnt/chiamerge
 
 		# Get serial number of disk
-		SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
+		SERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }')
 
 		# Write serial number
 		echo -ne creating file $SERIALNR in...'\t' "${i} "
@@ -294,10 +285,10 @@ write-sn()
 
 		case ${DEBUGLEVEL} in
 			0) mkdir -p ${MOUNTPOINT}/${i}1/serial && touch ${MOUNTPOINT}/${i}1/serial/${SERIALNR} >  /dev/null  2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
 			1) mkdir -p ${MOUNTPOINT}/${i}1/serial && touch ${MOUNTPOINT}/${i}1/serial/${SERIALNR} >> ${LOGFILE} 2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}NOT OK${NOCOLOR}";;
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 
 		umount ${MOUNTPOINT}/${i}1
@@ -341,7 +332,8 @@ VERSION="0.84"
 LOGFILE="./chiamerge.log"
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
 SERIALNRPREFIX="CHIA-"
-
+#SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
+#SERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }')
 
 RED="\033[1;31m"
 GREEN="\033[1;32m"

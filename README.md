@@ -127,9 +127,9 @@ The chia-mountall script in /usr/local/bin has rw (read/write) in the mount opti
 
 ## Bugs / Todo
 
-Currently SAS drives are not supported, because hdparm is used to aquire the serialnr. As https://github.com/augustynr pointed out (thx) this can be fixed by issuing smartctrl instead of hdparm, however this will break usb support. I will make SATA, SAS and USB work. Or will you do it?
+The function label doesnt check for the filesystem used on the specific partition. If you want to label a partition, the correct setting (xfs or ext4) must be applied in advance. If you try to label a partition in xfs for example when the partition is formatted in ext4 the function will fail. I don't think it is worth adding this function as the specific use case for chia is not to have a bunch of disks with different filesystems each but rather an array of disks that are all prepared in the same fashion.
 
-The installer needs to be better
+The installer needs to be better.
 
 Extended disk ranges from sda-sdaz are not working. Whats working though is sda-sdz sdaa-sdaz so you can just combine the two. At a later stage I want to pull the disk names from lsblk.
 
