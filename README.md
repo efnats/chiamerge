@@ -23,7 +23,7 @@ Here are some tools that will automate the process for you. It consists of a bas
 
 ## Why mergerfs?
 Mergerfs is a union filesystem that logically merges multiple paths together. There is no redunancy in mergerfs and this makes it a perfect match for chia plots, as there is no userdata stored, so that a lost disk drive can easily be replaced by simply replotting it. We don't use a blockdevice based filesystem like ZFS or LVM that will write over disk boundaries because the loss of one disk would then mean a loss of the entire dataset, which we cannot allow.
-The author of mergerfs is awesome, as you can see witness here: https://www.reddit.com/r/chia/comments/o7pxpz/mergerfs_and_chia/
+The author of mergerfs is awesome, as you can see here: https://www.reddit.com/r/chia/comments/o7pxpz/mergerfs_and_chia/
 
 ## Description
 
