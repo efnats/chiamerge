@@ -16,6 +16,8 @@
 #		--format-xfs 		(formats as an xfs filesystem)
 #		--label
 #		--write-sn
+#       --mount-disk
+#       --unmount-disk
 #		--help
 #
 # If no option is given, help is shown and the script exits.
@@ -32,22 +34,7 @@
 # Usage 2:	chiamerge <action> <diskname> <disknamerange> ... (in any order)
 # Example:	chiamerge --wipe sda sdc-sdg sdh
 #			chiamerge --wipe sda sdb --format sdc
-#
-# To Do:
-# -----
-#
-# 1. help text the the options overview; print it when script is called with -h, --help
-#    or without any arguments.
-#
-# 2. Display Spinner while waiting for each task to finish (especially useful for mkfs command)
-#    https://unix.stackexchange.com/questions/225179/
-#
-# 3. Filters for hhds. Replace selection of hdds with an array gathered from lsblk
-#
-# 4. Ignore the disk if it has a mount point
-#
-# 5. (Postponed) Add support for extended drive ranges: sda-sdzz
-#
+##
 #########################################################################################################
 
 ###################################
@@ -55,10 +42,11 @@
 ###################################
 
 DEBUGLEVEL=1
-FSTYPE=xfs
+FSTYPE=ext4
 EXT4OPTIONS="-F -m 0 -T largefile4"
 XFSOPTIONS="-f -b size=1024"
-
+SERIALNRPREFIX="CHIA"
+LOGFILE="./chiamerge.log"
 
 ###################################
 #        F U N C T I O N S        #
@@ -249,7 +237,7 @@ label()
 		SERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }')
 
 		# Label the partition
-		echo -ne labelling ${SERIALNRPREFIX}${SERIALNR}...'\t' "${i} "
+		echo -ne labelling ${SERIALNRPREFIX}-${SERIALNR}...'\t' "${i} "
 
 		case ${FSTYPE} in
 			ext4) LABEL="tune2fs -L";;
@@ -258,10 +246,10 @@ label()
 		esac
 
 		case ${DEBUGLEVEL} in
-			0) $LABEL "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >  /dev/null   2>&1 
+			0) $LABEL "${SERIALNRPREFIX}-${SERIALNR}" ${DEVICE}'1' >  /dev/null   2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
-			1) $LABEL "${SERIALNRPREFIX}${SERIALNR}" ${DEVICE}'1' >> ${LOGFILE}  2>&1 
+			1) $LABEL "${SERIALNRPREFIX}-${SERIALNR}" ${DEVICE}'1' >> ${LOGFILE}  2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 	done
@@ -272,7 +260,7 @@ write-sn()
 	for i in "$@"
 	do
         	DEVICE=/dev/${i}
-		MOUNTPOINT=/mnt/chiamerge
+		MOUNTPOINT=/media/chiamerge
 
 		# Get serial number of disk
 		SERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }')
@@ -293,6 +281,52 @@ write-sn()
 
 		umount ${MOUNTPOINT}/${i}1
 		rm -r ${MOUNTPOINT}/${i}1
+	done
+}
+
+
+mount-disk()
+{
+	for i in "$@"
+	do
+        	DEVICE=/dev/${i}
+		MOUNTPOINT=/media/${SERIALNRPREFIX}
+
+		# Mount drive
+		echo -ne Mounting disk...'\t' "${i} "
+
+#		mkdir -p ${MOUNTPOINT}/${i}1 &&	mount ${DEVICE}1 ${MOUNTPOINT}/${i}1
+
+		case ${DEBUGLEVEL} in
+			0) mkdir -p ${MOUNTPOINT}/${i}1 &&	mount ${DEVICE}1 ${MOUNTPOINT}/${i}1 >  /dev/null  2>&1
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
+
+			1) mkdir -p ${MOUNTPOINT}/${i}1 &&	mount ${DEVICE}1 ${MOUNTPOINT}/${i}1 >> ${LOGFILE} 2>&1
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
+		esac
+
+	done
+}
+
+
+umount-disk()
+{
+	for i in "$@"
+	do
+        	DEVICE=/dev/${i}
+		MOUNTPOINT=/media/${SERIALNRPREFIX}
+
+		# Unmount drive
+		echo -ne Unmounting disk...'\t' "${i} "
+
+		case ${DEBUGLEVEL} in
+			0) umount ${MOUNTPOINT}/${i}1 && rm -r ${MOUNTPOINT}/${i}1 >  /dev/null  2>&1
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
+
+			1) umount ${MOUNTPOINT}/${i}1 && rm -r ${MOUNTPOINT}/${i}1 >> ${LOGFILE} 2>&1
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
+		esac
+
 	done
 }
 
@@ -329,9 +363,7 @@ warningmesg()
 
 # Variables
 VERSION="0.84"
-LOGFILE="./chiamerge.log"
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
-SERIALNRPREFIX="CHIA-"
 #SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
 #SERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }')
 
@@ -480,6 +512,13 @@ do
 
 		write-sn)	echo -e		"${BOLD}\nWrite serialfile${NORM}"
 				write-sn   	${DEVICEOPTIONSLIST};;
+
+		mount-disk)	echo -e		"${BOLD}\nMount disk${NORM}"
+				mount-disk   	${DEVICEOPTIONSLIST};;
+
+		umount-disk)	echo -e		"${BOLD}\nUnmount disk${NORM}"
+		    	umount-disk   	${DEVICEOPTIONSLIST};;
+
 
 		*)		echo    	"Invalid action specified";;
 	esac
