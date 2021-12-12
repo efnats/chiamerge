@@ -103,11 +103,26 @@ In this scenario where (starting with empty disks) plot2.plot will be written to
 
 NOTE: upon starting **mnt-garden.mount** the **mount-chia-drives.service** is being executed automatically. Stopping the **mnt-garden.mount** will NOT unmount the drives from the system, but will only unmount the mergerfs mountpoint. If you want to unmount all disks from the system you should stop the **mount-chia-drives.service**
 
-## Installation
+## Installation / Examples
 
-### Install.sh
+### Installation
 
-A very basic first version of the installer.
+Open a terminal
+`git clone https://github.com/efnats/chiamerge.git`
+`cd chiamerge`
+`./install.sh`
+
+Open chiamerge with an editor and check the configuration settings. The default is to use ext4, but you can change it to xfs.
+
+`lsblk`to see your currently installed disks. Make sure all disks that you would like to prepare are unmounted
+
+`./chiamerge --chia-init-disk sda-sdf sdi sdaa-sdab` This will guide you through the process of formatting and labelling all your selected disks. In this case we have chosen 9 disks.
+
+Now we want to mount our disks and create the mergerfs mount /mnt/garden
+`systemctl start mnt-garden.mount`
+
+check in `/mnt/garden/serial` and count the number of files to verify the correct amount of disks is in the mergerfs mountpoint
+
 
 ## Configuration
 
@@ -120,12 +135,10 @@ There is a configuration section in the chiamerge bash script.
 
 ### mnt-garden.mount
 
-Please refer to https://github.com/trapexit/mergerfs#options to determine whats best for you. Especially the write policy is important here as decribed above.
-
-
-### mnt-garden.mount
+Please refer to https://github.com/trapexit/mergerfs#options to determine what the best options for mergerfs are for you. Especially the write policy is important here as decribed above. The supplied config has been tested with multiple stand-alone harvesters.
 
 The chia-mountall script in /usr/local/bin has rw (read/write) in the mount option set by default. If you're done plotting it would make sense to change this to ro (read-only)
+
 
 ## Bugs / Todo
 
@@ -135,6 +148,7 @@ The installer needs to be better.
 
 Extended disk ranges from sda-sdaz are not working. Whats working though is sda-sdz sdaa-sdaz so you can just combine the two. At a later stage I want to pull the disk names from lsblk.
 
+Documentation for mount/umount function
 ## Socials
 
 -   @efnats
