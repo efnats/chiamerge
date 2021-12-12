@@ -109,17 +109,22 @@ NOTE: upon starting **mnt-garden.mount** the **mount-chia-drives.service** is be
 
 Open a terminal
 `git clone https://github.com/efnats/chiamerge.git`
+
 `cd chiamerge`
+
 `./install.sh`
 
 Open chiamerge with an editor and check the configuration settings. The default is to use ext4, but you can change it to xfs.
 
 `lsblk`to see your currently installed disks. Make sure all disks that you would like to prepare are unmounted
 
-`./chiamerge --chia-init-disk sda-sdf sdi sdaa-sdab` This will guide you through the process of formatting and labelling all your selected disks. In this case we have chosen 9 disks.
+`./chiamerge --chia-init-disk sda-sdf sdi sdaa-sdab`
 
-Now we want to mount our disks and create the mergerfs mount /mnt/garden
+This will guide you through the process of formatting and labelling all your selected disks. In this case we have chosen 9 disks.
+
 `systemctl start mnt-garden.mount`
+
+To mount our disks and create the mergerfs mount /mnt/garden
 
 check in `/mnt/garden/serial` and count the number of files to verify the correct amount of disks is in the mergerfs mountpoint
 
