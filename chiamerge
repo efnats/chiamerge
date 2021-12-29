@@ -284,6 +284,8 @@ write-sn()
 	done
 }
 
+## howto detect unmounted disks
+## lsblk --noheadings --raw -o NAME,MOUNTPOINT | awk '$1~/[[:digit:]]/ && $2 == ""' 
 
 mount-disk()
 {

@@ -13,10 +13,10 @@ sudo cp -v mnt-garden.mount /etc/systemd/system/
 sudo cp -v mount-chia-drives.service /etc/systemd/system/
 sudo cp -v chia-mountall /usr/local/bin
 sudo cp -v chia-unmountall /usr/local/bin
-sudo cp -v chiaman /usr/local/bin
+sudo cp -v chiamerge /usr/local/bin
 sudo chmod +x /usr/local/bin/chia-mountall
 sudo chmod +x /usr/local/bin/chia-unmountall
-sudo chmod +x /usr/local/bin/chiaman
+sudo chmod +x /usr/local/bin/chiamerge
 sudo systemctl daemon-reload
 sudo systemctl restart mnt-garden.mount
 sudo systemctl enable mnt-garden.mount
