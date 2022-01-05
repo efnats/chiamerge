@@ -406,7 +406,7 @@ warningmesg()
 ###################################
 
 # Variables
-VERSION="0.84"
+VERSION="0.85"
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
 #SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
 #SERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }')
