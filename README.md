@@ -31,7 +31,7 @@ The author of mergerfs is awesome, as you can see here: https://www.reddit.com/r
 -   **mnt-garden.mount**: mount all disks that have the pattern CHIA in their disk label into one mergerfs mountpoint. the default is /mnt/garden
 -   **mount-chia-drives.service**: is called by mnt-garden.mount and will use udisks to mount all drives correctly in /media/root/[labelname] preparing it for the mergerfs mount.
 
-_BEWARE!!! CHIAMAN HAS FUNCTIONS THAT WILL DESTROY ANY DATA ON THE DISK YOU HAVE GIVEN IT TO WORK ON. All destructive functions come with a warning (y/n) for you to decide. BUT TAKE CARE!!_
+_CHIAMAN HAS FUNCTIONS THAT WILL DESTROY ANY DATA ON THE DISK YOU HAVE GIVEN IT TO WORK ON. Those are called --wipe --format and --chia-init-disk. Functions that are not destructive are --label and --write-sn. Any destructive functions will come with a warning (y/n) for you to decide beforehand._
 
 ## Requirements
 
