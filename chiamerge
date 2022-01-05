@@ -14,6 +14,7 @@
 #	 	--format 		(formats using the default FSTYPE defined in the script)
 #		--format-ext4 		(formats as an ext4 filesystem)
 #		--format-xfs 		(formats as an xfs filesystem)
+#		--format-ntfs		(formats as an ntfs filesystem)
 #		--label
 #		--write-sn
 #       --mount-disk
@@ -42,9 +43,12 @@
 ###################################
 
 DEBUGLEVEL=1
-FSTYPE=ext4
+FSTYPE=ntfs
+#FSTYPE=xfs
+#FSTYPE=ext4
 EXT4OPTIONS="-F -m 0 -T largefile4"
 XFSOPTIONS="-f -b size=1024"
+NTFSOPTIONS="-f"
 SERIALNRPREFIX="CHIA"
 LOGFILE="./chiamerge.log"
 
@@ -66,6 +70,7 @@ help()
 	 	--format
 		--format-ext4
 		--format-xfs
+		--format-ntfs
 		--label
 		--write-sn
 		--help
@@ -142,6 +147,7 @@ format()
 		case ${FSTYPE} in
 			ext4) FSOPTIONS=${EXT4OPTIONS};;
 			xfs)  FSOPTIONS=${XFSOPTIONS};;
+			ntfs) FSOPTIONS=${NTFSOPTIONS};;
 			*)    ;;
 		esac
 
@@ -227,11 +233,46 @@ format-xfs()
 	done
 }
 
+format-ntfs()
+{
+	for i in "$@"
+	do
+		DEVICE=/dev/${i}
+
+		# If the device is already mounted, don't perform any destructive action on it
+		#lsblk -n ${DEVICE} -l -o mountpoint | grep ${i} && echo "Disk ${DEVICE}'1' is mounted on ${MOUNTPOINT} - ignoring disk."; continue
+
+		# Partition the Disk
+		echo -ne creating partition...'\t''\t' "${i} "
+
+		case ${DEBUGLEVEL} in
+			0) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >  /dev/null  2>&1
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
+
+			1) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >> ${LOGFILE} 2>&1 
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
+		esac
+
+		# Create filesystem for large files, no reserved space and label partition
+		echo -ne creating NTFS filesystem...'\t' "${i} "
+
+		case ${DEBUGLEVEL} in
+			0) mkfs.ntfs ${NTFSOPTIONS} ${DEVICE}'1' >  /dev/null  2>&1
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
+
+			1) mkfs.ntfs ${NTFSOPTIONS} ${DEVICE}'1' >> ${LOGFILE} 2>&1 
+			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
+		esac
+
+		echo ""
+	done
+}
+
 label()
 {
 	for i in "$@"
 	do
-        	DEVICE=/dev/${i}
+        	DEVICE=/dev/${i}1
 
 		# Get serial number of disk
 		SERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }')
@@ -240,16 +281,17 @@ label()
 		echo -ne labelling ${SERIALNRPREFIX}-${SERIALNR}...'\t' "${i} "
 
 		case ${FSTYPE} in
-			ext4) LABEL="tune2fs -L";;
-			xfs)  LABEL="xfs_admin -L";;
+			ext4) LABEL=$(tune2fs -L ${SERIALNRPREFIX}-${SERIALNR} ${DEVICE});;
+			xfs)  LABEL=$(xfs_admin -L ${SERIALNRPREFIX}-${SERIALNR} ${DEVICE});;
+			ntfs) LABEL=$(ntfslabel ${DEVICE} ${SERIALNRPREFIX}-${SERIALNR});;
 			*)    ;;
 		esac
 
 		case ${DEBUGLEVEL} in
-			0) $LABEL "${SERIALNRPREFIX}-${SERIALNR}" ${DEVICE}'1' >  /dev/null   2>&1 
+			0) $LABEL >  /dev/null   2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
-			1) $LABEL "${SERIALNRPREFIX}-${SERIALNR}" ${DEVICE}'1' >> ${LOGFILE}  2>&1 
+			1) $LABEL >> ${LOGFILE}  2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 	done
@@ -259,7 +301,7 @@ write-sn()
 {
 	for i in "$@"
 	do
-        	DEVICE=/dev/${i}
+        DEVICE=/dev/${i}
 		MOUNTPOINT=/media/chiamerge
 
 		# Get serial number of disk
@@ -508,6 +550,9 @@ do
 
 		format-xfs) 	echo -e		"${BOLD}\nFormat${NORM}"
 				format-xfs  	${DEVICEOPTIONSLIST};;
+		
+		format-ntfs) 	echo -e		"${BOLD}\nFormat${NORM}"
+				format-ntfs  	${DEVICEOPTIONSLIST};;
 
 		label)		echo -e		"${BOLD}\nLabel${NORM}"
 				label   	${DEVICEOPTIONSLIST};;
