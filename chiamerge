@@ -193,7 +193,7 @@ format-ext4()
 			1) mkfs.ext4 ${EXT4OPTIONS} ${DEVICE}'1' >> ${LOGFILE} 2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
-
+		sync
 		echo ""
 	done
 }
@@ -228,7 +228,7 @@ format-xfs()
 			1) mkfs.xfs ${XFSOPTIONS} ${DEVICE}'1' >> ${LOGFILE} 2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
-
+		sync
 		echo ""
 	done
 }
@@ -263,7 +263,7 @@ format-ntfs()
 			1) mkfs.ntfs ${NTFSOPTIONS} ${DEVICE}'1' >> ${LOGFILE} 2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
-
+		sync
 		echo ""
 	done
 }
@@ -294,6 +294,7 @@ label()
 			1) $LABEL >> ${LOGFILE}  2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
+		sync
 	done
 }
 
@@ -323,6 +324,7 @@ write-sn()
 
 		umount ${MOUNTPOINT}/${i}1
 		rm -r ${MOUNTPOINT}/${i}1
+		sync
 	done
 }
 
@@ -348,7 +350,7 @@ mount-disk()
 			1) mkdir -p ${MOUNTPOINT}/${i}1 &&	mount ${DEVICE}1 ${MOUNTPOINT}/${i}1 >> ${LOGFILE} 2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
-
+		sync
 	done
 }
 
@@ -370,7 +372,7 @@ umount-disk()
 			1) umount ${MOUNTPOINT}/${i}1 && rm -r ${MOUNTPOINT}/${i}1 >> ${LOGFILE} 2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
-
+		sync
 	done
 }
 
