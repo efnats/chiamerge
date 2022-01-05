@@ -62,7 +62,13 @@ Usages:
 
 `--wipe` wipe **all information** from the drive using the wipefs command
 
-`--format` **parition the drive** using parted with one partition that uses the entire disk, then create an ext4|xfs filesystem on that disk. EXT4|XFS arguments are pre optimized for chia farming and can be changed in the source code (EXT4OPTIONS|XFSOPTIONS)
+`--format` **parition the drive** using parted with one partition that uses the entire disk, then create an ext4|xfs|ntfs filesystem on that disk. EXT4|XFS|NTFS arguments are pre optimized for chia farming and can be changed in the configuration part of chiamerge (EXT4OPTIONS|XFSOPTIONS|NTFSOPTINS)
+
+`--format-ext4` **parition the drive with EXT4 Filesystem** using parted with one partition that uses the entire disk, then create an ext4 filesystem on that disk. You will not need this option if you set the desired filesystem in the config and use --format or --chia-init-disk
+
+`--format-xfs` **parition the drive with XFS Filesystem** using parted with one partition that uses the entire disk, then create an ext4 filesystem on that disk. You will not need this option if you set the desired filesystem in the config and use --format or --chia-init-disk
+
+`--format-ntfs` **parition the drive with NTFS Filesystem** using parted with one partition that uses the entire disk, then create an ext4 filesystem on that disk. You will not need this option if you set the desired filesystem in the config and use --format or --chia-init-disk
 
 `--label` **aquire serialnr** of disk and **label** the disk as CHIA-[SERIALNR]
 
@@ -114,7 +120,7 @@ Open a terminal
 
 `./install.sh`
 
-Open chiamerge with an editor and check the configuration settings. The default is to use ext4, but you can change it to xfs.
+Open chiamerge with an editor and check the configuration settings. The default is to use ext4, but you can change it to xfs or ntfs.
 
 `lsblk`to see your currently installed disks. Make sure all disks that you would like to prepare are unmounted
 
@@ -134,8 +140,8 @@ check in `/mnt/garden/serial` and count the number of files to verify the correc
 ### chiamerge
 
 There is a configuration section in the chiamerge bash script.
--   **FSTYPE** Use FTSYPE=EXT4 or FSTYPE=XFS
--   **EXT4OPTIONS** and **XFSOPTIONS** will determine the options that mkfs will use to write the filesystem. The default options are optimized to fit as many plots as possible in the filesystem. If you have suggestions to improve do let me know.
+-   **FSTYPE** Use FTSYPE=EXT4 or FSTYPE=XFS or FSTYPE=NTFS
+-   **EXT4OPTIONS** and **XFSOPTIONS** and **NTFSOPTIONS** will determine the options that mkfs will use to write the filesystem. The default options are optimized to fit as many plots as possible in the filesystem. If you have suggestions to improve please do let me know.
 -   **DEBUGLEVEL** DEBUGLEVEL=0 to disable logging into ./chiamerge.log
 
 ### mnt-garden.mount
