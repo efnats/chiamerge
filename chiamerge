@@ -43,8 +43,8 @@
 ###################################
 
 DEBUGLEVEL=1
-FSTYPE=ntfs
-#FSTYPE=xfs
+#FSTYPE=ntfs
+FSTYPE=xfs
 #FSTYPE=ext4
 EXT4OPTIONS="-F -m 0 -T largefile4"
 XFSOPTIONS="-f -b size=1024"
@@ -275,23 +275,43 @@ label()
         	DEVICE=/dev/${i}1
 
 		# Get serial number of disk
-		SERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }')
+		LONGSERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }')
+		COUNTSN=$(echo -n "$LONGSERIALNR" | wc -c)
+		COUNTSERIALNRPREFIX=$(echo -n $SERIALNRPREFIX} | wc -c)
+		SUMSERIAL=$((COUNTSN+COUNTSERIALNRPREFIX))
+
+		XFSMAXLABEL=11
+		XFSTARGETREMOVE=$((SUMSERIAL-XFSMAXLABEL))
+		XFSSERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }' | awk '{ print substr ($0, '$XFSTARGETREMOVE') }')
+
+		EXT4MAXLABEL=15
+		EXT4TARGETREMOVE=$((SUMSERIAL-EXT4MAXLABEL))
+		EXT4SERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }' | awk '{ print substr ($0, '$EXT4TARGETREMOVE') }')
+
+		NTFSMAXLABEL=31
+		NTFSTARGETREMOVE=$((SUMSERIAL-NTFSMAXLABEL))
+		NTFSSERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }' | awk '{ print substr ($0, '$NTFSTARGETREMOVE') }')
 
 		# Label the partition
-		echo -ne labelling ${SERIALNRPREFIX}-${SERIALNR}...'\t' "${i} "
+		case ${FSTYPE} in
+			ext4) echo -ne labelling ${SERIALNRPREFIX}-${EXT4SERIALNR}...'\t' "${i} ";;
+			xfs)  echo -ne labelling ${SERIALNRPREFIX}-${XFSSERIALNR}...'\t' "${i} ";;
+			ntfs) echo -ne labelling ${SERIALNRPREFIX}-${NTFSSERIALNR}...'\t' "${i} ";;
+			*)    ;;
+		esac
 
 		case ${FSTYPE} in
-			ext4) LABEL=$(tune2fs -L ${SERIALNRPREFIX}-${SERIALNR} ${DEVICE});;
-			xfs)  LABEL=$(xfs_admin -L ${SERIALNRPREFIX}-${SERIALNR} ${DEVICE});;
-			ntfs) LABEL=$(ntfslabel ${DEVICE} ${SERIALNRPREFIX}-${SERIALNR});;
+			ext4) LABEL=$(tune2fs -L ${SERIALNRPREFIX}-${EXT4SERIALNR} ${DEVICE});;
+			xfs)  LABEL=$(xfs_admin -L ${SERIALNRPREFIX}-${XFSSERIALNR} ${DEVICE});;
+			ntfs) LABEL=$(ntfslabel ${DEVICE} ${SERIALNRPREFIX}-${NTFSSERIALNR});;
 			*)    ;;
 		esac
 
 		case ${DEBUGLEVEL} in
-			0) $LABEL >  /dev/null   2>&1
+			0) echo $LABEL >  /dev/null   2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
-			1) $LABEL >> ${LOGFILE}  2>&1 
+			1) echo $LABEL >> ${LOGFILE}  2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 		sync
