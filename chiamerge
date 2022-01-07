@@ -43,8 +43,8 @@
 ###################################
 
 DEBUGLEVEL=1
-#FSTYPE=ntfs
-FSTYPE=xfs
+FSTYPE=ntfs
+#FSTYPE=xfs
 #FSTYPE=ext4
 EXT4OPTIONS="-F -m 0 -T largefile4"
 XFSOPTIONS="-f -b size=1024"
