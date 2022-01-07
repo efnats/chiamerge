@@ -292,6 +292,8 @@ label()
 		NTFSTARGETREMOVE=$((SUMSERIAL-NTFSMAXLABEL))
 		NTFSSERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }' | awk '{ print substr ($0, '$NTFSTARGETREMOVE') }')
 
+		umount ${DEVICE}
+		
 		# Label the partition
 		case ${FSTYPE} in
 			ext4) echo -ne labelling ${SERIALNRPREFIX}-${EXT4SERIALNR}...'\t' "${i} ";;
