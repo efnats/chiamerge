@@ -2,54 +2,23 @@
 #
 # Name:         chiamerge
 # Author:       efnats
-# Purpose:
+# Purpose:      mass handling of disk drives in preparation for PoST crypto farming
+#               actions explained below
 #
-# Syntax:	chiamerge.sh  [--option]...  arguments...
-#
-#		- options are actions to be performed
-#		- arguments are disknames
-#
-# Options:	--chia-init-disk 	(same as: --wipe --format --label --write-sn)
-#		--wipe
-#	 	--format 		(formats using the default FSTYPE defined in the script)
-#		--format-ext4 		(formats as an ext4 filesystem)
-#		--format-xfs 		(formats as an xfs filesystem)
-#		--format-ntfs		(formats as an ntfs filesystem)
-#		--label
-#		--write-sn
-#       --mount-disk
-#       --unmount-disk
-#		--help
-#
-# If no option is given, help is shown and the script exits.
-#
-# Arguments:	one or more disknames (eg: sda sdb-sdd)
-#
-# At least one argument (diskname) is to be given to the script.
-#
-# Usage 1: 	chiamerge <diskname>...	
-# Example:	chiamerge sda
-#			chiamerge sda-sdd
-#			chiamerge sda sdd-sdf sdj
-#
-# Usage 2:	chiamerge <action> <diskname> <disknamerange> ... (in any order)
-# Example:	chiamerge --wipe sda sdc-sdg sdh
-#			chiamerge --wipe sda sdb --format sdc
-##
-#########################################################################################################
+################################################################################################################
 
 ###################################
 #      Configuration       #
 ###################################
 
 DEBUGLEVEL=1
-FSTYPE=ntfs
-#FSTYPE=xfs
-#FSTYPE=ext4
+
 EXT4OPTIONS="-F -m 0 -T largefile4"
 XFSOPTIONS="-f -b size=1024"
 NTFSOPTIONS="-f"
+PARTITION=1
 SERIALNRPREFIX="CHIA"
+
 LOGFILE="./chiamerge.log"
 
 ###################################
@@ -62,33 +31,42 @@ help()
 	echo ${USAGE}
 	cat <<END		
 
+Syntax:	chiamerge.sh  [--option]...  arguments...
+
 		- options are actions to be performed
-		- argements are disknames
+		- arguments are disknames
 
- Options:	--chia-init-disk (same as: --wipe --format --label --write-sn)
-		--wipe
-	 	--format
-		--format-ext4
-		--format-xfs
-		--format-ntfs
-		--label
-		--write-sn
-		--help
+Options:	
 
- If no option is given, help is shown and the script exits.
+		--help			    (show this help text)
+		--ext4 			    (sets filesystem type to ext4)
+		--xfs 			    (sets filesystem type to xfs)
+		--ntfs			    (sets filesystem type to ntfs)
+		--wipe			    (wipes all data from drive)
+        --format 		    (formats using the filesystem type given as argument to the script)
+		--label			    (formats using the filesystem type given as argument to the script)
+		--write-sn		    (creates an empty file named after Serialnr of drive in folder "serial")
+		--chia-init-disk 	(same as: --wipe --format --label --write-sn)
+        --mount-disk	    (mounts disk(s))
+		--unmount-disk	    (unmounts disk(s))
+		
+# If no option is given, help is shown and the script exits.
 
- Arguments:	one or more disknames (eg: sda sdb-sdd)
+Arguments:    one or more disknames (eg: sda sdb-sdd)
 
- At least one argument (diskname) is to be given to the script.
+At least one argument (diskname) is to be given to the script.
 
- Usage 1: 	chiamerge <diskname>...	
- Example:	chiamerge sda
-			chiamerge sda-sdd
-			chiamerge sda sdd-sdf sdj
+For --format and --label, FSTYPE also to be given (one of: --xfs, --ext4, --ntfs)
 
- Usage 2:	chiamerge <action> <diskname> <disknamerange> ... (in any order)
- Example:	chiamerge --wipe sda sdc-sdg sdh
-			chiamerge --wipe sda sdb --format sdc
+Usage 1: 	chiamerge <diskname>...	
+Example:	chiamerge sda
+		    chiamerge sda-sdd
+		    chiamerge sda sdd-sdf sdj
+
+Usage 2:	chiamerge <action> <diskname> <disknamerange> ... (in any order)
+Example:	chiamerge --wipe sda sdc-sdg sdh
+  		    chiamerge --wipe sda sdb --format sdc
+	    	chiamerge --ext4 --chia-init-disk
 END
 
 	echo "> END: ${TIMESTAMP}-------------------------------------------------------" >> ${LOGFILE}
@@ -103,7 +81,7 @@ wipe()
         	DEVICE=/dev/${i}
 		
 		# If the device is already mounted, don't perform any destructive action on it
-#		lsblk -n ${DEVICE} -l -o mountpoint | grep ${i} && echo "Disk ${DEVICE}'1' is mounted on ${MOUNTPOINT} - ignoring disk."; continue
+		#lsblk -n ${DEVICE} -l -o mountpoint | grep ${i} && echo "Disk ${DEVICE}'1' is mounted on ${MOUNTPOINT} - ignoring disk."; continue
 	
 		# Wipe the Disk
 		echo -ne wiping...'\t''\t''\t' "${i} "
@@ -116,7 +94,7 @@ wipe()
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 
-		sync
+		
 	done
 }
 
@@ -141,7 +119,7 @@ format()
 		esac
 
 		
-        # Create filesystem for large files, no reserved space
+		# Create filesystem for large files, no reserved space
 		echo -n -ne creating $FSTYPE filesystem...'\t' "${i} "
 
 		case ${FSTYPE} in
@@ -152,118 +130,13 @@ format()
 		esac
 
 		case ${DEBUGLEVEL} in
-			0) mkfs.${FSTYPE} ${FSOPTIONS} ${DEVICE}'1' >  /dev/null  2>&1
+			0) mkfs.${FSTYPE} ${FSOPTIONS} ${DEVICE}${PARTITION} >  /dev/null  2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
-			1) mkfs.${FSTYPE} ${FSOPTIONS} ${DEVICE}'1' >> ${LOGFILE} 2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
-		esac
-
-		echo ""
-	done
-}
-
-format-ext4()
-{
-	for i in "$@"
-	do
-		DEVICE=/dev/${i}
-
-		# If the device is already mounted, don't perform any destructive action on it
-		#lsblk -n ${DEVICE} -l -o mountpoint | grep ${i} && echo "Disk ${DEVICE}'1' is mounted on ${MOUNTPOINT} - ignoring disk."; continue
-
-		# Partition the Disk
-		echo -ne creating partition...'\t''\t' "${i} "
-
-		case ${DEBUGLEVEL} in
-			0) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >  /dev/null  2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
-
-			1) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >> ${LOGFILE} 2>&1 
+			1) mkfs.${FSTYPE} ${FSOPTIONS} ${DEVICE}${PARTITION} >> ${LOGFILE} 2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 
-		# Create filesystem for large files, no reserved space
-		echo -ne creating EXT4 filesystem...'\t' "${i} "
-
-		case ${DEBUGLEVEL} in
-			0) mkfs.ext4 ${EXT4OPTIONS} ${DEVICE}'1' >  /dev/null  2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
-
-			1) mkfs.ext4 ${EXT4OPTIONS} ${DEVICE}'1' >> ${LOGFILE} 2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
-		esac
-		sync
-		echo ""
-	done
-}
-
-format-xfs()
-{
-	for i in "$@"
-	do
-		DEVICE=/dev/${i}
-
-		# If the device is already mounted, don't perform any destructive action on it
-		#lsblk -n ${DEVICE} -l -o mountpoint | grep ${i} && echo "Disk ${DEVICE}'1' is mounted on ${MOUNTPOINT} - ignoring disk."; continue
-
-		# Partition the Disk
-		echo -ne creating partition...'\t''\t' "${i} "
-
-		case ${DEBUGLEVEL} in
-			0) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >  /dev/null  2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
-
-			1) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >> ${LOGFILE} 2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
-		esac
-
-		# Create filesystem for large files, no reserved space and label partition
-		echo -ne creating XFS filesystem...'\t' "${i} "
-
-		case ${DEBUGLEVEL} in
-			0) mkfs.xfs ${XFSOPTIONS} ${DEVICE}'1' >  /dev/null  2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
-
-			1) mkfs.xfs ${XFSOPTIONS} ${DEVICE}'1' >> ${LOGFILE} 2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
-		esac
-		sync
-		echo ""
-	done
-}
-
-format-ntfs()
-{
-	for i in "$@"
-	do
-		DEVICE=/dev/${i}
-
-		# If the device is already mounted, don't perform any destructive action on it
-		#lsblk -n ${DEVICE} -l -o mountpoint | grep ${i} && echo "Disk ${DEVICE}'1' is mounted on ${MOUNTPOINT} - ignoring disk."; continue
-
-		# Partition the Disk
-		echo -ne creating partition...'\t''\t' "${i} "
-
-		case ${DEBUGLEVEL} in
-			0) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >  /dev/null  2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
-
-			1) echo -e "g\nn\n1\n\n\nw" | fdisk ${DEVICE} >> ${LOGFILE} 2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
-		esac
-
-		# Create filesystem for large files, no reserved space and label partition
-		echo -ne creating NTFS filesystem...'\t' "${i} "
-
-		case ${DEBUGLEVEL} in
-			0) mkfs.ntfs ${NTFSOPTIONS} ${DEVICE}'1' >  /dev/null  2>&1
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
-
-			1) mkfs.ntfs ${NTFSOPTIONS} ${DEVICE}'1' >> ${LOGFILE} 2>&1 
-			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
-		esac
-		sync
 		echo ""
 	done
 }
@@ -272,10 +145,10 @@ label()
 {
 	for i in "$@"
 	do
-        	DEVICE=/dev/${i}1
+        	DEVICE=/dev/${i}
 
 		# Get serial number of disk
-		LONGSERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }')
+		LONGSERIALNR=$(smartctl -i ${DEVICE}${PARTITION} | grep -i "Serial Number" | awk  '{ print $3 }')
 		COUNTSN=$(echo -n "$LONGSERIALNR" | wc -c)
 		COUNTSERIALNRPREFIX=$(echo -n $SERIALNRPREFIX} | wc -c)
 		SUMSERIAL=$((COUNTSN+COUNTSERIALNRPREFIX))
@@ -292,7 +165,7 @@ label()
 		NTFSTARGETREMOVE=$((SUMSERIAL-NTFSMAXLABEL))
 		NTFSSERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }' | awk '{ print substr ($0, '$NTFSTARGETREMOVE') }')
 
-		umount ${DEVICE}
+		#umount ${DEVICE}
 		
 		# Label the partition
 		case ${FSTYPE} in
@@ -303,9 +176,9 @@ label()
 		esac
 
 		case ${FSTYPE} in
-			ext4) LABEL=$(tune2fs -L ${SERIALNRPREFIX}-${EXT4SERIALNR} ${DEVICE});;
-			xfs)  LABEL=$(xfs_admin -L ${SERIALNRPREFIX}-${XFSSERIALNR} ${DEVICE});;
-			ntfs) LABEL=$(ntfslabel ${DEVICE} ${SERIALNRPREFIX}-${NTFSSERIALNR});;
+			ext4) LABEL=$(tune2fs -L ${SERIALNRPREFIX}-${EXT4SERIALNR} ${DEVICE}${PARTITION});;
+			xfs)  LABEL=$(xfs_admin -L ${SERIALNRPREFIX}-${XFSSERIALNR} ${DEVICE}${PARTITION});;
+			ntfs) LABEL=$(ntfslabel ${DEVICE}${PARTITION} ${SERIALNRPREFIX}-${NTFSSERIALNR});;
 			*)    ;;
 		esac
 
@@ -316,7 +189,7 @@ label()
 			1) echo $LABEL >> ${LOGFILE}  2>&1 
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
-		sync
+		
 	done
 }
 
@@ -331,26 +204,26 @@ write-sn()
 		SERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }')
 
 		# Write serial number
-		echo -ne creating file $SERIALNR in...'\t' "${i} "
+		echo -ne creating file $SERIALNR in ${i}${PARTITION}/serial/'\t'
 
-		mkdir -p ${MOUNTPOINT}/${i}1
-		mount ${DEVICE}1 ${MOUNTPOINT}/${i}1
+		mkdir -p ${MOUNTPOINT}/${i}${PARTITION}
+		mount ${DEVICE}${PARTITION} ${MOUNTPOINT}/${i}${PARTITION}
 
 		case ${DEBUGLEVEL} in
-			0) mkdir -p ${MOUNTPOINT}/${i}1/serial && touch ${MOUNTPOINT}/${i}1/serial/${SERIALNR} >  /dev/null  2>&1
+			0) mkdir -p ${MOUNTPOINT}/${i}${PARTITION}/serial && touch ${MOUNTPOINT}/${i}${PARTITION}/serial/${SERIALNR} >  /dev/null  2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
-			1) mkdir -p ${MOUNTPOINT}/${i}1/serial && touch ${MOUNTPOINT}/${i}1/serial/${SERIALNR} >> ${LOGFILE} 2>&1
+			1) mkdir -p ${MOUNTPOINT}/${i}${PARTITION}/serial && touch ${MOUNTPOINT}/${i}${PARTITION}/serial/${SERIALNR} >> ${LOGFILE} 2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
 
-		umount ${MOUNTPOINT}/${i}1
-		rm -r ${MOUNTPOINT}/${i}1
-		sync
+		umount ${MOUNTPOINT}/${i}${PARTITION}
+		rm -r ${MOUNTPOINT}/${i}${PARTITION}
+		
 	done
 }
 
-## howto detect unmounted disks
+## How to detect unmounted disks
 ## lsblk --noheadings --raw -o NAME,MOUNTPOINT | awk '$1~/[[:digit:]]/ && $2 == ""' 
 
 mount-disk()
@@ -363,19 +236,19 @@ mount-disk()
 		# Mount drive
 		echo -ne Mounting disk...'\t' "${i} "
 
-#		mkdir -p ${MOUNTPOINT}/${i}1 &&	mount ${DEVICE}1 ${MOUNTPOINT}/${i}1
+#		mkdir -p ${MOUNTPOINT}/${i}${PARTITION} &&	mount ${DEVICE}${PARTITION}${MOUNTPOINT}/${i}${PARTITION}
 
 		case ${DEBUGLEVEL} in
-			0) mkdir -p ${MOUNTPOINT}/${i}1 &&	mount ${DEVICE}1 ${MOUNTPOINT}/${i}1 >  /dev/null  2>&1
+			0) mkdir -p ${MOUNTPOINT}/${i}${PARTITION} &&	mount ${DEVICE}${PARTITION} ${MOUNTPOINT}/${i}${PARTITION} >  /dev/null  2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
-			1) mkdir -p ${MOUNTPOINT}/${i}1 &&	mount ${DEVICE}1 ${MOUNTPOINT}/${i}1 >> ${LOGFILE} 2>&1
+			1) mkdir -p ${MOUNTPOINT}/${i}${PARTITION} &&	mount ${DEVICE}${PARTITION} ${MOUNTPOINT}/${i}${PARTITION} >> ${LOGFILE} 2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
-		sync
+
+		
 	done
 }
-
 
 umount-disk()
 {
@@ -388,13 +261,14 @@ umount-disk()
 		echo -ne Unmounting disk...'\t' "${i} "
 
 		case ${DEBUGLEVEL} in
-			0) umount ${MOUNTPOINT}/${i}1 && rm -r ${MOUNTPOINT}/${i}1 >  /dev/null  2>&1
+			0) umount ${MOUNTPOINT}/${i}${PARTITION} && rm -r ${MOUNTPOINT}/${i}${PARTITION} >  /dev/null  2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 
-			1) umount ${MOUNTPOINT}/${i}1 && rm -r ${MOUNTPOINT}/${i}1 >> ${LOGFILE} 2>&1
+			1) umount ${MOUNTPOINT}/${i}${PARTITION} && rm -r ${MOUNTPOINT}/${i}${PARTITION} >> ${LOGFILE} 2>&1
 			   test $? -eq 0 && echo -e "${GREEN}OK${NOCOLOR}" || echo -e "${RED}ERROR${NOCOLOR}";;
 		esac
-		sync
+
+		
 	done
 }
 
@@ -430,7 +304,7 @@ warningmesg()
 ###################################
 
 # Variables
-VERSION="0.85"
+VERSION="0.88"
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
 #SERIALNR=$(hdparm -I ${DEVICE} | awk '/Serial Number/ { print $3 }')
 #SERIALNR=$(smartctl -i ${DEVICE} | grep -i "Serial Number" | awk  '{ print $3 }')
@@ -444,6 +318,7 @@ REV=`tput smso`
 
 WORDOPTIONSLIST=""
 DEVICEOPTIONSLIST=""
+FSTYPE=""
 
 # Send output and error to log file
 if [[ ${DEBUGLEVEL} -eq 1 ]]
@@ -522,9 +397,6 @@ done
 DEVICEOPTIONSLIST=$(echo ${DEVICEOPTIONSLIST} | xargs)
 WORDOPTIONSLIST=$(echo ${WORDOPTIONSLIST} | xargs)
 
-#echo "DEVICEOPTIONSLIST is ${DEVICEOPTIONSLIST}"
-#echo "WORDOPTIONSLIST   is ${WORDOPTIONSLIST}"
-
 # If option given is --help or one of the options given is --help
 if grep -wqe "help" <<< ${WORDOPTIONSLIST}
 then
@@ -545,10 +417,18 @@ then
 	fi
 
 # If disk(s) given and action given is: chia-init-disk
-elif [[ "${WORDOPTIONSLIST}" == "chia-init-disk" ]]
+elif grep -wqe "chia-init-disk" <<< ${WORDOPTIONSLIST}
 then
-	ACTIONS="wipe format label write-sn"
-	warningmesg "${ACTIONS}" "${DEVICEOPTIONSLIST}"
+
+ 	ACTIONS="wipe format label write-sn"
+    warningmesg "${ACTIONS}" "${DEVICEOPTIONSLIST}"
+
+	if grep -wqe "xfs|ext4|ntfs" <<< ${WORDOPTIONSLIST}
+	then
+		echo "Filesystem type missing. Specify using --ext4|--xfs|--ntfs" 
+		exit
+	fi
+
 
 # Else, run the specified action on all the devices given as arguments
 else
@@ -556,51 +436,59 @@ else
 	warningmesg "${ACTIONS}" "${DEVICEOPTIONSLIST}"
 fi
 
-#echo "ACTIONS is ${ACTIONS}"
+# Ensure FSTYPE option is specified also if --format or --label options are given
+if [[ "${ACTIONS}" == *"format"* ]] || [[ "${ACTIONS}" == *"label"* ]]
+then
+	grep -wqe "xfs"  <<< ${WORDOPTIONSLIST} && FSTYPE="xfs"
+	grep -wqe "ext4" <<< ${WORDOPTIONSLIST} && FSTYPE="ext4"
+	grep -wqe "ntfs" <<< ${WORDOPTIONSLIST} && FSTYPE="ntfs"
+
+	# and exit the script if not
+	if [[ -z "${FSTYPE}" ]] 
+	then
+		echo "Filesystem type missing. Specify using --ext4|--xfs|--ntfs" 
+		exit
+	fi
+fi
 
 for ACTION in ${ACTIONS}
 do
 	case ${ACTION} in
-		help)		help;;
+		help)			help;;
 
-		wipe) 		echo -e		"${BOLD}\nWipe${NORM}"
-				wipe    	${DEVICEOPTIONSLIST};;
+		ext4) 			echo -e		"${BOLD}\nFilesystem type: EXT4${NORM}";;
 
-		format) 	echo -e		"${BOLD}\nFormat${NORM}"
-				format  	${DEVICEOPTIONSLIST};;
+		xfs) 			echo -e		"${BOLD}\nFilesystem type: XFS${NORM}";;
+	
+		ntfs) 			echo -e		"${BOLD}\nFilesystem type: NTFS${NORM}";;
 
-		format-ext4) 	echo -e		"${BOLD}\nFormat${NORM}"
-				format-ext4  	${DEVICEOPTIONSLIST};;
+		wipe) 			echo -e		"${BOLD}\nWipe${NORM}"
+					wipe    	${DEVICEOPTIONSLIST};;
 
-		format-xfs) 	echo -e		"${BOLD}\nFormat${NORM}"
-				format-xfs  	${DEVICEOPTIONSLIST};;
-		
-		format-ntfs) 	echo -e		"${BOLD}\nFormat${NORM}"
-				format-ntfs  	${DEVICEOPTIONSLIST};;
+		format) 		echo -e		"${BOLD}\nFormat${NORM}"
+					format  	${DEVICEOPTIONSLIST};;
 
-		label)		echo -e		"${BOLD}\nLabel${NORM}"
-				label   	${DEVICEOPTIONSLIST};;
+		label)			echo -e		"${BOLD}\nLabel${NORM}"
+					label   	${DEVICEOPTIONSLIST};;
 
-		write-sn)	echo -e		"${BOLD}\nWrite serialfile${NORM}"
-				write-sn   	${DEVICEOPTIONSLIST};;
+		write-sn)		echo -e		"${BOLD}\nWrite serialfile${NORM}"
+					write-sn   	${DEVICEOPTIONSLIST};;
 
-		mount-disk)	echo -e		"${BOLD}\nMount disk${NORM}"
-				mount-disk   	${DEVICEOPTIONSLIST};;
+		mount-disk)		echo -e		"${BOLD}\nMount disk${NORM}"
+					mount-disk   	${DEVICEOPTIONSLIST};;
 
-		umount-disk)	echo -e		"${BOLD}\nUnmount disk${NORM}"
-		    	umount-disk   	${DEVICEOPTIONSLIST};;
+		umount-disk)		echo -e		"${BOLD}\nUnmount disk${NORM}"
+		    		umount-disk   	${DEVICEOPTIONSLIST};;
 
 
-		*)		echo    	"Invalid action specified";;
+		*)			echo    	"Invalid action specified";;
 	esac
 done
 
-#echo "FSTYPE is ${FSTYPE}"
-#echo "FSOPTIONS is ${FSOPTIONS}"
 
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
 
 echo -e "\n\n> END: ${TIMESTAMP} ----------------------------------------------------------------" >> ${LOGFILE}
 #
 #END#
-#########################################################################################################
+################################################################################################################
