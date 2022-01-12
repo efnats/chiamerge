@@ -1,0 +1,11 @@
+#!/bin/bash
+
+mountdir=/media/root
+dockerdir=/home/chia/docker
+#plotfolder=/nft_plots
+plotfolder=
+
+plots=$(printf '/plots/%s'${plotfolder}':' $(ls -1 $mountdir/))
+echo "plots_dir="$plots > $dockerdir/.env
+#echo "plots_dir="$plots
+#export plots

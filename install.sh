@@ -16,9 +16,10 @@ sudo mkdir -p /mnt/garden
 sudo apt install -y udisks2 mergerfs smartmontools ntfs-3g
 sudo cp -v mnt-garden.mount /etc/systemd/system/
 sudo cp -v mount-chia-drives.service /etc/systemd/system/
-sudo cp -v chia-mountall /usr/local/bin
-sudo cp -v chia-unmountall /usr/local/bin
-sudo cp -v chiamerge /usr/local/bin
+sudo cp -v chia-mountall /usr/local/bin/
+sudo cp -v chia-unmountall /usr/local/bin/
+sudo cp -v chiamerge /usr/local/bin/
+sudo cp -v exportdrives /usr/local/bin/
 sudo chmod +x /usr/local/bin/chia-mountall
 sudo chmod +x /usr/local/bin/chia-unmountall
 sudo chmod +x /usr/local/bin/chiamerge
