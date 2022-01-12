@@ -13,15 +13,18 @@
     <a href="#Installation">Installation</a> •
     <a href="#Configuration">Configuration</a> •
     <a href="#bugs-todo">Bugs / Todo</a>
+    <a href="#exportdrives">Exportdrives Script</a>
 
 </p>
 
 ## Note
 IT HAS COME TO MY ATTENTION THAT USING MERGERFS ON A LARGER SET OF DISKS WILL IMPACT LOOKUP TIMES IN A NEGATIVE WAY. AT LEAST IN ONE CASE DISABLING MERGERFS AND MANUALLY SELECTING DISKS ON A SET OF 32 SATA DISKS CONNECTED INTERNALLY LED TO A SIGNIFICANT SPEED IMPROVEMENT OF LOOKUP TIMES FROM 2-3 SECONDS TO BELOW 1 SECOND.
 
-FOR THAT REASON I'M MOVING AWAY FROM MERGERFS. I WILL FOCUS ON IMPROVING DISK PREPARATION USING THE CHIAMERGE TOOL AND MOUNTING SERVICES AND I WILL SOON PROVIDE YOU WITH A TOOL TO AUTOMATICALLY SET THE CORRECT SEPERATE DISKS IN YOUR DOCKER-COMPOSE FILE.
+FOR THAT REASON I'M MOVING AWAY FROM MERGERFS. I WILL FOCUS ON IMPROVING DISK PREPARATION USING THE CHIAMERGE TOOL AND MOUNTING SERVICES AND I WILL SOON PROVIDE YOU WITH A TOOL TO AUTOMATICALLY SET THE CORRECT SEPERATE DISKS IN YOUR DOCKER-COMPOSE FILE (FOR MACHINARIS).
 
-THERE IS A SCENARIO WHERE THE MERGERFS METHOD IS STILL BENEFICIAL DURING THE PLOTTING PHASE, WHEN BANDWITH LIMITATIONS PER DISK SLOWS DOWN COPYING OF PLOTS. READ IN SECTION **mnt-garden.mount** FOR MORE INFO
+THERE IS A SCENARIO WHERE THE MERGERFS METHOD IS STILL BENEFICIAL DURING THE PLOTTING PHASE, WHEN BANDWITH LIMITATIONS PER DISK SLOWS DOWN COPYING OF PLOTS. READ IN SECTION **mnt-garden.mount** FOR MORE INFO.
+
+Also see **Exportdrives Script** at the very end.
 
 ## About
 
@@ -84,7 +87,7 @@ Usages:
 `--wipe` wipe **all information** from the drive using the wipefs command
 
 
-Here is the more detailed explanation for the functions label and write-sn
+Here is the more detailed explanation for the functions `--label` and `--write-sn`
 
 `label`:
 
@@ -119,20 +122,25 @@ NOTE: upon starting **mnt-garden.mount** the **mount-chia-drives.service** is be
 
 ### Installation
 
-Open a terminal
 `git clone https://github.com/efnats/chiamerge.git`
 
 `cd chiamerge`
 
 `./install.sh`
 
-Open chiamerge with an editor and check the configuration settings. The default is to use ext4, but you can change it to xfs or ntfs.
+Open chiamerge with an editor and check the configuration settings. If you happen to have your partitions not on 
 
-`lsblk`to see your currently installed disks. Make sure all disks that you would like to prepare are unmounted
+`lsblk` to see your currently installed disks. Make sure all disks that you would like to prepare are unmounted
 
-`./chiamerge --chia-init-disk sda-sdf sdi sdaa-sdab`
+`./chiamerge --ext4 --chia-init-disk sda-sdf sdi sdaa-sdab`
 
-This will guide you through the process of formatting and labelling all your selected disks. In this case we have chosen 9 disks.
+This will guide you through the process of formatting and labelling all your selected disks. In this case we have chosen 9 disks. All disks will be formated because `--chia-init-disk` will call `--wipe` `--format` `--label` and `--write-sn`. Don't do this if you already have plots on your disks that you want to preserve.
+
+If you already have a set of disks containing plots, you can simply label your disks and for (added comfort) create a file with the serialnr in a subfolder. This is non destructive. Your plots won't be deleted by this action.
+
+`./chiamerge --ext4 --label --write-sn sda-sdf sdi sdaa-sdab`
+
+Replace `--ext4` with `--xfs` or `--ntfs` depending on what filesystem you have stored your plots on.
 
 `systemctl start mnt-garden.mount`
 
@@ -156,10 +164,45 @@ Please refer to https://github.com/trapexit/mergerfs#options to determine what t
 
 The chia-mountall script in /usr/local/bin has rw (read/write) in the mount option set by default. If you're done plotting it would make sense to change this to ro (read-only)
 
+## Exportdrives Script
+
+This is a quick implementation of a script to automate setting your mounted disks in your docker compose file for Machinaris. Edit the script and adapt the variables to your settings.
+-   **mountdir**    this is where the script will search for your mounted chia drives. leave it to /media/root if you are using the mount-chia-drives.service
+-   **docker**      where your docker-compose.yml resides
+-   **plotfolder**  if your plots are stored in a seperate folder within your drives (for example nft_plots) then set this accordingly. Leading slash `/` is required. If you have your plot files in the root of your drives, then leave this empty.
+
+This will output a list of all your drives from your `mountdir` and write it to an `.env` file where docker-compose.yml will pick it up upon `docker-compose start`. See [here](https://docs.docker.com/compose/environment-variables/) for more info.
+
+Here is an example `docker-compose.yml`
+
+
+#  docker-compose.yml for Machinaris
+    version: '3.7' 
+    services: 
+        machinaris: 
+            image: ghcr.io/guydavis/machinaris:latest 
+            container_name: machinaris 
+            hostname: hostname 
+            restart: always 
+            volumes: 
+                - ~/.machinaris:/root/.chia 
+                - /media/root:/plots 
+            environment: 
+                - TZ=Europe/Berlin 
+                - mode=fullnode 
+                - worker_address=192.168.20.1 
+                - plots_dir=${plots} 
+                - blockchains=chia 
+            ports: 
+                - 8926:8926 
+                - 8927:8927 
+                - 8444:8444 
+                - 8447:8447 
+
 
 ## Bugs / Todo
 
-The function label doesnt check for the filesystem used on the specific partition. If you want to label a partition, the correct setting (xfs or ext4) must be applied in advance. If you try to label a partition in xfs for example when the partition is formatted in ext4 the function will fail. I don't think it is worth adding this function as the specific use case for chia is not to have a bunch of disks with different filesystems each but rather an array of disks that are all prepared in the same fashion.
+The function label doesnt check for the filesystem used on the specific partition. If you try to label a partition in xfs for example when the partition is formatted in ext4 the function will fail.
 
 The installer needs to be better.
 
