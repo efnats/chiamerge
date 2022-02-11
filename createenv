@@ -1,0 +1,30 @@
+#!/bin/bash
+
+mountdir=/media/root
+dockerdir=/home/chia/docker
+env=$dockerdir/.env
+#plotfolder=/nft_plots
+plotfolder=
+
+# PLOTSDIR
+plots=$(printf '/plots/%s'${plotfolder}':' $(ls -1 $mountdir/))
+sed -i "/^plots_dir=/c\plots_dir=$plots" $env
+
+# LANIP
+lanip=$(hostname -I | awk '{print $1}')
+sed -i "/^lanip=/c\lanip=$lanip" $env
+
+# WireguardIP
+wgip=$(hostname -I | awk '{print $2}')
+sed -i "/^wgip=/c\wgip=$wgip" $env
+
+# COMPOSE_FILE
+compose=$(printf '/home/chia/docker/%s': $(ls -1 *.yml))
+sed -i "/^COMPOSE_FILE=/c\COMPOSE_FILE=$compose" $env
+sed -i "/^COMPOSE_FILE=s/.$//" $env
+
+hostname=$(hostname)
+sed -i "/^hostname=/c\hostname=$hostname" $env
+
+# show everything at the end of execution
+cat $env
